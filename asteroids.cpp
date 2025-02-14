@@ -824,6 +824,9 @@ void render()
     ggprint8b(&r, 16, 0x00ffff00, "Press C for Credits");
     if (gl.credits) {
         extern void show_christine(Rect *r);
+        extern void show_davalos(Rect *r);
+        extern void show_edwin(Rect *r);
+        extern void show_bryan(Rect *r);
         show_christine(&r);
     }
 	//-------------------------------------------------------------------------
