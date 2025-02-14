@@ -61,12 +61,14 @@ public:
 	int xres, yres;
 	char keys[65536];
 	int mouse_cursor_on;
-	Global() {
+	int credits;
+    Global() {
 		xres = 640;
 		yres = 480;
 		memset(keys, 0, 65536);
 		// mouse value 1 = true = mouse is a regular mouse.
 		mouse_cursor_on = 1;
+        credits = 0;
 	}
 } gl;
 
@@ -521,7 +523,21 @@ int check_keys(XEvent *e)
 			gl.mouse_cursor_on = !gl.mouse_cursor_on;
 			x11.show_mouse_cursor(gl.mouse_cursor_on);
 			break;
-		case XK_s:
+		case XK_C:
+            // credits
+            // =====================================================
+            // optimize the following 4 lines
+            //if (gl.credits == 0) 
+              //  gl.credits = 1;
+            //else
+              //  gl.credits = 0;
+            // =====================================================
+            gl.credits = !gl.credits;   // logical not
+            // =====================================================
+            //gl.credits = gl.credits ^ 1;  // exclusive or
+            // ===================================================== 
+            //gl.credits = ~gl.credits;   // bitwise not
+            // =====================================================
 			break;
 		case XK_Down:
 			break;
@@ -793,6 +809,7 @@ void physics()
 	}
 }
 
+
 void render()
 {
 	Rect r;
@@ -803,7 +820,12 @@ void render()
 	r.center = 0;
 	ggprint8b(&r, 16, 0x00ff0000, "3350 - Asteroids");
 	ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
-	ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g.nasteroids);
+    ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g.nasteroids);
+    ggprint8b(&r, 16, 0x00ffff00, "Press C for Credits");
+    if (gl.credits) {
+        extern void show_christine(Rect *r);
+        show_christine(&r);
+    }
 	//-------------------------------------------------------------------------
 	//Draw the ship
 	glColor3fv(g.ship.color);
