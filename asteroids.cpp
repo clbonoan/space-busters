@@ -827,10 +827,12 @@ void render()
         extern void show_davalos(Rect *r);
         extern void show_edwin(Rect *r);
         extern void show_bbarrios(Rect *r);
+        extern void show_mgarris(Rect *r);
         show_christine(&r);
         show_davalos(&r);
         show_edwin(&r);
         show_bbarrios(&r);
+        show_mgarris(&r);
     }
 	//-------------------------------------------------------------------------
 	//Draw the ship
