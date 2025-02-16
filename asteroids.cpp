@@ -523,14 +523,14 @@ int check_keys(XEvent *e)
 			gl.mouse_cursor_on = !gl.mouse_cursor_on;
 			x11.show_mouse_cursor(gl.mouse_cursor_on);
 			break;
-		case XK_C:
+		case XK_c:
             // credits
             // =====================================================
             // optimize the following 4 lines
             //if (gl.credits == 0) 
-              //  gl.credits = 1;
+            //    gl.credits = 1;
             //else
-              //  gl.credits = 0;
+            //    gl.credits = 0;
             // =====================================================
             gl.credits = !gl.credits;   // logical not
             // =====================================================
@@ -821,13 +821,16 @@ void render()
 	ggprint8b(&r, 16, 0x00ff0000, "3350 - Asteroids");
 	ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
     ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g.nasteroids);
-    ggprint8b(&r, 16, 0x00ffff00, "Press C for Credits");
+    ggprint8b(&r, 16, 0x00ffff00, "Press c for Credits");
     if (gl.credits) {
         extern void show_christine(Rect *r);
         extern void show_davalos(Rect *r);
         extern void show_edwin(Rect *r);
-        extern void show_bryan(Rect *r);
+        extern void show_bbarrios(Rect *r);
         show_christine(&r);
+        show_davalos(&r);
+        show_edwin(&r);
+        show_bbarrios(&r);
     }
 	//-------------------------------------------------------------------------
 	//Draw the ship
