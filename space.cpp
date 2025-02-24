@@ -161,10 +161,13 @@ public:
         MAIN_MENU,
         ENDLESS_MODE,
         BOSS_MODE,
+        PAUSE_MENU
     };
     GameMode gameMode;
     bool inMenu;
     int menuSelection;
+    bool isPaused;
+    bool prevKeys[65536];
 public:
 	Game() {
 		ahead = NULL;
@@ -179,7 +182,9 @@ public:
         inMenu = true;  // start in the menu
         gameMode = MAIN_MENU;
         menuSelection = 0;  // default selection is Endless mode
-		//build 5 asteroids...
+        isPaused = false;
+        memset(prevKeys, 0, sizeof(prevKeys));
+		//build 2 asteroids...
 		for (int j=0; j<2; j++) {
 			Asteroid *a = new Asteroid;
 			a->nverts = 8;
@@ -358,7 +363,9 @@ void render();
 void drawHealthBar(float health);
 void renderMenu();
 void drawMenu();
-void handleMenuInput();
+void handleMainMenuInput();
+void handlePauseMenuInput();
+void drawPauseMenu();
 
 //==========================================================================
 // M A I N
@@ -563,7 +570,11 @@ int check_keys(XEvent *e)
 	(void)shift;
 	switch (key) {
 		case XK_Escape:
-			return 1;
+		//	return 1;
+            if (!g.inMenu)
+                g.isPaused = !g.isPaused;
+            //renderMenu();
+            break;
 		case XK_m:
 			gl.mouse_cursor_on = !gl.mouse_cursor_on;
 			x11.show_mouse_cursor(gl.mouse_cursor_on);
@@ -932,16 +943,40 @@ void drawMenu() {
     // options
     ggprint8b(&r, 16, (g.menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Endless Mode");
     ggprint8b(&r, 16, (g.menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, "Boss Mode");
+    ggprint8b(&r, 16, (g.menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Exit");
+
 }
 
+//-----------------------------------------------------------------
+// add pause menu
+//-----------------------------------------------------------------
+void drawPauseMenu() {
+    // draw "resume", "main menu", and "exit" options
+    Rect r;
+    r.bot = gl.yres / 2;
+    r.left = gl.xres / 2 - 100;
+    r.center = 0;
+    ggprint8b(&r, 24, 0x00ffff00, "Pause Menu");
+    ggprint8b(&r, 16, 0x00ffffff, "Resume");
+    ggprint8b(&r, 16, 0x00ffffff, "Return to Main Menu");
+    ggprint8b(&r, 16, 0x00ffffff, "Exit");
+    
+}
 
 //----------------------------------------------------------------
-//added function to render menu before game
+//added function to render menu before game and pause menu during
 //----------------------------------------------------------------
 void renderMenu() {
     if (g.inMenu) {
         drawMenu();
-        handleMenuInput();
+        handleMainMenuInput();
+        return;
+    } 
+    
+    if (g.isPaused) {
+        // pause menu logic
+        drawPauseMenu();
+        handlePauseMenuInput();
         return;
     }
 
@@ -954,25 +989,68 @@ void renderMenu() {
     }
 }
 
+
 //---------------------------------------------------------------
-//added function to handle menu choices
+//added function to handle main menu choices
 //--------------------------------------------------------------
-void handleMenuInput() {
+void handleMainMenuInput() {
     // handle menu navigation with keyboard input
-    if (gl.keys[XK_Up]) 
-        g.menuSelection = (g.menuSelection == 0) ? 1 : 0;
-    if (gl.keys[XK_Down]) 
-        g.menuSelection = (g.menuSelection == 1) ? 0 : 1;
+    if (gl.keys[XK_Up] && !g.prevKeys[XK_Up]) 
+        g.menuSelection = (g.menuSelection == 0) ? 2 : g.menuSelection - 1; 
+    if (gl.keys[XK_Down] && !g.prevKeys[XK_Down])
+        g.menuSelection = (g.menuSelection == 2) ? 0 : g.menuSelection + 1;
+        //g.menuSelection ^= 1;   //XOR to toggle between 0 and 1
+    
+    // update prevKeys; prevents multiple presses per key press
+    memcpy(g.prevKeys, gl.keys, sizeof(gl.keys));
 
     // confirm selection with Enter key
     if (gl.keys[XK_Return]) {
         g.inMenu = false;
 
         // start selected game mode
-        if (g.menuSelection == 0) 
-            g.gameMode = Game::ENDLESS_MODE;
-        else if (g.menuSelection == 1)
-            g.gameMode = Game::BOSS_MODE;
+        switch (g.menuSelection) {
+            case 0: // endless mode
+                g.gameMode = Game::ENDLESS_MODE;
+                break;
+            case 1: // boss mode
+                g.gameMode = Game::BOSS_MODE;
+                break;
+            case 2: // exit
+                exit(0);
+                break;
+        }
+    }
+
+}
+
+// ---------------------------------------------------------
+// add function to handle pause menu input
+// ---------------------------------------------------------
+void handlePauseMenuInput() {
+    if (gl.keys[XK_Up] && !g.prevKeys[XK_Up])
+        g.menuSelection = (g.menuSelection == 0) ? 2 : g.menuSelection - 1;
+    if (gl.keys[XK_Down] && !g.prevKeys[XK_Down]) 
+        g.menuSelection = (g.menuSelection == 2) ? 0 : g.menuSelection + 1;
+
+    // update prevKeys; prevents multiple presses per key press
+    memcpy(g.prevKeys, gl.keys, sizeof(gl.keys));
+
+    // selecting option
+    if (gl.keys[XK_Return]) {
+        g.isPaused = false;
+        switch (g.menuSelection) {
+            case 0: // resume
+                g.isPaused = false;
+                break;
+            case 1: // go to main menu
+                g.inMenu = true;
+                g.isPaused = false;
+                break;
+            case 2: // exit game
+                exit(0);
+                break;
+        }
     }
 }
 
@@ -1003,6 +1081,7 @@ void render()
         show_bbarrios(&r);
         show_mgarris(&r);
     }
+
 	//-------------------------------------------------------------------------
 	//Draw the ship
 	glColor3fv(g.ship.color);
