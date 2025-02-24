@@ -69,6 +69,7 @@ public:
 	char keys[65536];
 	int mouse_cursor_on;
 	int credits;
+    int instructions;
     Global() {
 		xres = 640;
 		yres = 480;
@@ -76,6 +77,7 @@ public:
 		// mouse value 1 = true = mouse is a regular mouse.
 		mouse_cursor_on = 1;
         credits = 0;
+        instructions = 0;
 	}
 } gl;
 
@@ -595,6 +597,13 @@ int check_keys(XEvent *e)
             //gl.credits = ~gl.credits;   // bitwise not
             // =====================================================
 			break;
+        case XK_i:
+            // instructions
+            // -------------------------------------------------------
+            // added instructions for space game; has not changed for
+            // original asteroids game
+            // -------------------------------------------------------
+            gl.instructions = !gl.instructions;
 		case XK_Down:
 			break;
 		case XK_equal:
@@ -1068,7 +1077,8 @@ void render()
     // ggprint8b(&r, 16, 0x00ffff00, "enemies left: %i", g.nenemies);
     // ----------------------------------------------------------------
     ggprint8b(&r, 16, 0x00ffff00, "Press c for Credits");
-   
+    ggprint8b(&r, 16, 0x00ffff00, "Press i for Instructions");
+
     if (gl.credits) {
         extern void show_christine(Rect *r);
         extern void show_davalos(Rect *r);
@@ -1080,6 +1090,11 @@ void render()
         show_edwin(&r);
         show_bbarrios(&r);
         show_mgarris(&r);
+    }
+
+    if (gl.instructions) {
+        extern void show_instructions(Rect *r);
+        show_instructions(&r);
     }
 
 	//-------------------------------------------------------------------------
