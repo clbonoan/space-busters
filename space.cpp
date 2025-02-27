@@ -364,10 +364,11 @@ void physics();
 void render();
 void drawHealthBar(float health);
 void renderMenu();
-void drawMenu();
+//void drawMenu();
 void handleMainMenuInput();
 void handlePauseMenuInput();
 void drawPauseMenu();
+
 
 //==========================================================================
 // M A I N
@@ -977,6 +978,7 @@ void drawPauseMenu() {
 //----------------------------------------------------------------
 void renderMenu() {
     if (g.inMenu) {
+        //extern void drawMenu();
         drawMenu();
         handleMainMenuInput();
         return;
