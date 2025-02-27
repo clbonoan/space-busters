@@ -221,7 +221,7 @@ public:
 	}
 	~Game() {
 		delete [] barr;
-	}
+    }
 } g;
 
 //X Windows variables
@@ -965,10 +965,15 @@ void drawPauseMenu() {
     r.bot = gl.yres / 2;
     r.left = gl.xres / 2 - 100;
     r.center = 0;
+
+    //in here, we could maybe do what drawMenu() does; 
     ggprint8b(&r, 24, 0x00ffff00, "Pause Menu");
-    ggprint8b(&r, 16, 0x00ffffff, "Resume");
-    ggprint8b(&r, 16, 0x00ffffff, "Return to Main Menu");
-    ggprint8b(&r, 16, 0x00ffffff, "Exit");
+    ggprint8b(&r, 16, (g.menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Resume");
+    ggprint8b(&r, 16, (g.menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, "Return to Main Menu");
+    ggprint8b(&r, 16, (g.menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Exit");
+
+     
+    
     
 }
 
@@ -1055,6 +1060,8 @@ void handlePauseMenuInput() {
             case 1: // go to main menu
                 g.inMenu = true;
                 g.isPaused = false;
+                renderMenu();
+                
                 break;
             case 2: // exit game
                 exit(0);
