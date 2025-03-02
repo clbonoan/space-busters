@@ -967,17 +967,13 @@ void drawPauseMenu() {
     r.left = gl.xres / 2 - 100;
     r.center = 0;
 
-    //in here, we could maybe do what drawMenu() does; 
     ggprint8b(&r, 24, 0x00ffff00, "Pause Menu");
     ggprint8b(&r, 16, (g.menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Resume");
     ggprint8b(&r, 16, (g.menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, "Return to Main Menu");
     ggprint8b(&r, 16, (g.menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Exit");
 
-     
-    
-    
 }
-
+ 
 //----------------------------------------------------------------
 //added function to render menu before game and pause menu during
 //----------------------------------------------------------------
@@ -991,6 +987,7 @@ void renderMenu() {
     
     if (g.isPaused) {
         // pause menu logic
+        //extern void drawPauseMenu();
         drawPauseMenu();
         handlePauseMenuInput();
         return;
@@ -1062,8 +1059,8 @@ void handlePauseMenuInput() {
             case 1: // go to main menu
                 g.inMenu = true;
                 g.isPaused = false;
-                renderMenu();
-                
+                //renderMenu();
+                g.gameMode = Game::MAIN_MENU;
                 break;
             case 2: // exit game
                 exit(0);
