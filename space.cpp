@@ -21,12 +21,20 @@
 #include <cmath>
 #include <X11/Xlib.h>
 //#include <X11/Xutil.h>
-//#include <GL/gl.h>
+#include <GL/gl.h>
 //#include <GL/glu.h>
-#include <X11/keysym.h>
 #include <GL/glx.h>
+#include <X11/keysym.h>
 #include "log.h"
 #include "fonts.h"
+#include "texture.h"
+
+//texture variables
+//GLuint ufoTexture;
+//int ufoWidth, ufoHeight;
+
+
+using namespace std; 
 
 //defined types
 typedef float Flt;
@@ -43,6 +51,7 @@ typedef Flt	Matrix[4][4];
 #define VecSub(a,b,c) (c)[0]=(a)[0]-(b)[0]; \
 						(c)[1]=(a)[1]-(b)[1]; \
 						(c)[2]=(a)[2]-(b)[2]
+
 //constants
 const float timeslice = 1.0f;
 const float gravity = -0.2f;
@@ -427,7 +436,10 @@ void init_opengl(void)
 	//Do this to allow fonts
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
+    //do this to allow ufo texture
+    initTextures();
 }
+
 
 void normalize2d(Vec v)
 {
@@ -671,7 +683,7 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 // --------------------------------------------------------------------
 // added health bar function 
 // --------------------------------------------------------------------
-void drawHealthBar(float health) 
+/*void drawHealthBar(float health) 
 {
     if (health > 1.0f) 
         health = 1.0f;
@@ -718,9 +730,7 @@ void drawHealthBar(float health)
         glVertex2f(xPos, barY + healthBarHeight);
         glEnd();
     }
-
-
-}
+}*/
 
 void physics()
 {
@@ -1002,7 +1012,6 @@ void renderMenu() {
     }
 }
 
-
 //---------------------------------------------------------------
 //added function to handle main menu choices
 //--------------------------------------------------------------
@@ -1034,7 +1043,6 @@ void handleMainMenuInput() {
                 break;
         }
     }
-
 }
 
 // ---------------------------------------------------------
