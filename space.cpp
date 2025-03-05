@@ -196,7 +196,7 @@ public:
         isPaused = false;
         memset(prevKeys, 0, sizeof(prevKeys));
 		//build 2 asteroids...
-		for (int j=0; j<2; j++) {
+		for (int j=0; j<5; j++) {
 			Asteroid *a = new Asteroid;
 			a->nverts = 8;
 			a->radius = rnd()*80.0 + 40.0;
@@ -204,9 +204,16 @@ public:
 			Flt angle = 0.0f;
 			Flt inc = (PI * 2.0) / (Flt)a->nverts;
 			for (int i=0; i<a->nverts; i++) {
-				a->vert[i][0] = sin(angle) * (r2 + rnd() * a->radius);
-				a->vert[i][1] = cos(angle) * (r2 + rnd() * a->radius);
-				angle += inc;
+	
+                a->vert[i][0] = sin(angle) * a->radius;
+                a->vert[i][1] = cos(angle) * a->radius;
+                angle += inc;
+            
+                
+                
+                //		a->vert[i][0] = sin(angle) * (r2 + rnd() * a->radius);
+		//		a->vert[i][1] = cos(angle) * (r2 + rnd() * a->radius);
+		//		angle += inc;
 			}
 			a->pos[0] = (Flt)(rand() % gl.xres);
 			a->pos[1] = (Flt)(rand() % gl.yres);
@@ -432,7 +439,7 @@ void init_opengl(void)
 	glDisable(GL_CULL_FACE);
 	//
 	//Clear the screen to black
-	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
 	//Do this to allow fonts
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
@@ -659,17 +666,23 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 	//build ta from a
 	ta->nverts = 8;
 	ta->radius = a->radius / 2.0;
-	Flt r2 = ta->radius / 2.0;
+	// Flt r2 = ta->radius / 2.0; removed to make circles
 	Flt angle = 0.0f;
-	Flt inc = (PI * 2.0) / (Flt)ta->nverts;
+	Flt inc = (PI * 2.0) / ta->nverts; //(Flt)ta->nverts;
+
 	for (int i=0; i<ta->nverts; i++) {
-		ta->vert[i][0] = sin(angle) * (r2 + rnd() * ta->radius);
-		ta->vert[i][1] = cos(angle) * (r2 + rnd() * ta->radius);
-		angle += inc;
+		a->vert[i][0] = sin(angle) * ta->radius;
+        a->vert[i][1] = cos(angle) * ta->radius;
+        angle += inc;
+        
+        
+        //ta->vert[i][0] = sin(angle) * (r2 + rnd() * ta->radius);
+		//ta->vert[i][1] = cos(angle) * (r2 + rnd() * ta->radius);
+		//angle += inc;
 	}
 	ta->pos[0] = a->pos[0] + rnd()*10.0-5.0;
 	ta->pos[1] = a->pos[1] + rnd()*10.0-5.0;
-	ta->pos[2] = 0.0f;
+	//ta->pos[2] = 0.0f;
 	ta->angle = 0.0;
 	ta->rotate = a->rotate + (rnd() * 4.0 - 2.0);
 	ta->color[0] = 0.8;
@@ -678,6 +691,8 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 	ta->vel[0] = a->vel[0] + (rnd()*2.0-1.0);
 	ta->vel[1] = a->vel[1] + (rnd()*2.0-1.0);
 	//std::cout << "frag" << std::endl;
+    ta->prev = NULL; //adjusting link pointer
+    ta->next = NULL; //adjusting link pointer
 }
 
 // --------------------------------------------------------------------
@@ -831,7 +846,7 @@ void physics()
 					//break it into pieces.
 					Asteroid *ta = a;
 					buildAsteroidFragment(ta, a);
-					int r = rand()%10+5;
+					int r = rand()%10+2;
 					for (int k=0; k<r; k++) {
 						//get the next asteroid position in the array
 						Asteroid *ta = new Asteroid;
