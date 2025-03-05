@@ -1149,7 +1149,7 @@ void render()
 	glVertex2f(0.0f, 0.0f);
 	glEnd();
 	glPopMatrix();
-	if (gl.keys[XK_Up] || g.mouseThrustOn) {
+	if (gl.keys[XK_Up] || g.mouseThrustOn || gl.keys[XK_Down]) {
 		int i;
 		//draw thrust
 		Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
