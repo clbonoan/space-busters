@@ -214,7 +214,11 @@ public:
 			Asteroid *a = new Asteroid;
 			a->nverts = 8;
 			a->radius = rnd()*80.0 + 40.0;
+<<<<<<< HEAD
 //			Flt r2 = a->radius / 2.0;
+=======
+			//Flt r2 = a->radius / 2.0;
+>>>>>>> 19a385aecf961cd367a9a537e1130051de5a1bb9
 			Flt angle = 0.0f;
 			Flt inc = (PI * 2.0) / (Flt)a->nverts;
 			for (int i=0; i<a->nverts; i++) {
@@ -904,21 +908,25 @@ void physics()
 		//move the bullet
 		b->pos[0] += b->vel[0];
 		b->pos[1] += b->vel[1];
-		//Check for collision with window edges
-		if (b->pos[0] < 0.0) {
-			b->pos[0] += (float)gl.xres;
-		}
-		else if (b->pos[0] > (float)gl.xres) {
-			b->pos[0] -= (float)gl.xres;
-		}
-		else if (b->pos[1] < 0.0) {
-			b->pos[1] += (float)gl.yres;
-		}
-		else if (b->pos[1] > (float)gl.yres) {
-			b->pos[1] -= (float)gl.yres;
-		}
-		++i;
-	}
+		// bouncy bullets
+    	if (b->pos[0] < 0.0f) {
+        	b->pos[0] = 0.0f;
+        	b->vel[0] = -b->vel[0];
+    	} else if (b->pos[0] > (float)gl.xres) {
+        	b->pos[0] = gl.xres;
+        	b->vel[0] = -b->vel[0];
+    }
+
+    	// bullets bounce off the edges
+    	if (b->pos[1] < 0.0f) {
+        	b->pos[1] = 0.0f;
+        	b->vel[1] = -b->vel[1];
+    	} else if (b->pos[1] > (float)gl.yres) {
+        	b->pos[1] = gl.yres;
+        	b->vel[1] = -b->vel[1];
+    }
+    ++i;
+}
 	//
 	//Update asteroid positions
 	Asteroid *a = g.ahead;
