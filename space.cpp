@@ -4,14 +4,10 @@
 //framework program: asteroids.cpp
 //framework author:  Gordon Griesel
 //date:    2014 - 2025
-//mod spring 2015: added constructors
-//This program is a game starting point for a 3350 project.
 //
 //------------------------------------------------------------
 //changes made:
-// added a health bar and functionality that should decrease by
-// 10 if hit;
-// added menu for endless mode and boss mode
+//
 //------------------------------------------------------------
 #include <iostream>
 #include <cstdlib>
@@ -156,9 +152,12 @@ public:
 
 class Game {
 public:
+    GLuint stardustTexture;
+    GLuint ufoTexture;
 	Ship ship;
 	Asteroid *ahead;
 	Bullet *barr;
+    int showStardust;
 	int nasteroids;
 	int nbullets;
     int nenemies;   // number of enemies for endless mode
@@ -181,6 +180,7 @@ public:
     bool prevKeys[65536];
 public:
 	Game() {
+        showStardust = 0;
 		ahead = NULL;
 		barr = new Bullet[MAX_BULLETS];
 		nasteroids = 0;
