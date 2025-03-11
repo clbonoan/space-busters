@@ -76,9 +76,11 @@ public:
 	int credits;
     int instructions;
     Global() {
-		xres = 640;
-		yres = 480;
-		memset(keys, 0, 65536);
+		//xres = 640;
+		//yres = 480;
+		xres = 900;
+        yres = 760;
+        memset(keys, 0, 65536);
 		// mouse value 1 = true = mouse is a regular mouse.
 		mouse_cursor_on = 1;
         credits = 0;
@@ -214,11 +216,7 @@ public:
 			Asteroid *a = new Asteroid;
 			a->nverts = 8;
 			a->radius = rnd()*80.0 + 40.0;
-<<<<<<< HEAD
-//			Flt r2 = a->radius / 2.0;
-=======
 			//Flt r2 = a->radius / 2.0;
->>>>>>> 19a385aecf961cd367a9a537e1130051de5a1bb9
 			Flt angle = 0.0f;
 			Flt inc = (PI * 2.0) / (Flt)a->nverts;
 			for (int i=0; i<a->nverts; i++) {
@@ -311,9 +309,10 @@ public:
             unlink(ppmname);
     }   
 };
-Image img[2] = { 
+Image img[3] = { 
 "./images/stardust-health.png",
-"./images/ufo.png"
+"./images/ufo.png",
+"./images/title.png"
 };
 
 
