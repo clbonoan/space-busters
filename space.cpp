@@ -53,7 +53,7 @@ const float timeslice = 1.0f;
 const float gravity = -0.2f;
 #define PI 3.141592653589793
 #define ALPHA 1
-const int MAX_BULLETS = 11;
+const int MAX_BULLETS = 100;
 const Flt MINIMUM_ASTEROID_SIZE = 60.0;
 
 //-----------------------------------------------------------------------------
@@ -67,6 +67,8 @@ extern double timeSpan;
 extern double timeDiff(struct timespec *start, struct timespec *end);
 extern void timeCopy(struct timespec *dest, struct timespec *source);
 //-----------------------------------------------------------------------------
+
+Vec mousePos = {0, 0, 0};
 
 class Global {
 public:
@@ -457,6 +459,7 @@ void renderMenu();
 void handleMainMenuInput();
 void handlePauseMenuInput();
 void drawPauseMenu();
+void cleanupTextures();
 
 
 //==========================================================================
@@ -493,6 +496,7 @@ int main()
 	}
 	cleanup_fonts();
 	logClose();
+	cleanupTextures();
 	return 0;
 }
 
@@ -504,11 +508,12 @@ unsigned char *buildAlphaData(Image *img)
     //transparency information.
     //It is used in this application to erase parts of a texture-map from view.
     int i;
-    int a,b,c;
+    int a,b,c, clear;
     unsigned char *newdata, *ptr;
     unsigned char *data = (unsigned char *)img->data;
     newdata = (unsigned char *)malloc(img->width * img->height * 4);
     ptr = newdata;
+
     for (i=0; i<img->width * img->height * 3; i+=3) {
         a = *(data+0);
         b = *(data+1);
@@ -516,6 +521,15 @@ unsigned char *buildAlphaData(Image *img)
         *(ptr+0) = a;
         *(ptr+1) = b;
         *(ptr+2) = c;
+
+		if (a > 240 && b > 240 && c > 240) {
+            clear = 0;  // Fully transparent if white pixels
+        } else {
+            clear = 255;  // Fully opaque if not
+        }
+
+		*(ptr + 3) = clear;
+
         //-----------------------------------------------
         //get largest color component...
         //*(ptr+3) = (unsigned char)((
@@ -530,7 +544,7 @@ unsigned char *buildAlphaData(Image *img)
         //this code optimizes the commented code above.
         //code contributed by student: Chris Smith
         //
-        *(ptr+3) = (a|b|c);
+        //*(ptr+3) = (a|b|c);
         //-----------------------------------------------
         ptr += 4;
         data += 3;
@@ -559,6 +573,16 @@ void init_opengl(void)
 	//Do this to allow fonts
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
+
+	glGenTextures(1, &g.ufoTexture);
+    glBindTexture(GL_TEXTURE_2D, g.ufoTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	unsigned char *ufoData = buildAlphaData(&img[1]);  // Adding transparency
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img[1].width, img[1].height, 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE, ufoData);
+    free(ufoData);
 }
 
 
@@ -584,46 +608,56 @@ void check_mouse(XEvent *e)
 	//
 	static int ct=0;
 	//std::cout << "m" << std::endl << std::flush;
-	if (e->type == ButtonRelease) {
-		return;
-	}
-	if (e->type == ButtonPress) {
-		if (e->xbutton.button==1) {
-			//Left button is down
-			//a little time between each bullet
-			struct timespec bt;
-			clock_gettime(CLOCK_REALTIME, &bt);
-			double ts = timeDiff(&g.bulletTimer, &bt);
-			if (ts > 0.1) {
-				timeCopy(&g.bulletTimer, &bt);
-				//shoot a bullet...
-				if (g.nbullets < MAX_BULLETS) {
-					Bullet *b = &g.barr[g.nbullets];
-					timeCopy(&b->time, &bt);
-					b->pos[0] = g.ship.pos[0];
-					b->pos[1] = g.ship.pos[1];
-					b->vel[0] = g.ship.vel[0];
-					b->vel[1] = g.ship.vel[1];
-					//convert ship angle to radians
-					Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
-					//convert angle to a vector
-					Flt xdir = cos(rad);
-					Flt ydir = sin(rad);
-					b->pos[0] += xdir*20.0f;
-					b->pos[1] += ydir*20.0f;
-					b->vel[0] += xdir*6.0f + rnd()*0.1;
-					b->vel[1] += ydir*6.0f + rnd()*0.1;
-					b->color[0] = 1.0f;
-					b->color[1] = 1.0f;
-					b->color[2] = 1.0f;
-					++g.nbullets;
-				}
-			}
-		}
-		if (e->xbutton.button==3) {
-			//Right button is down
-		}
-	}
+	// if (e->type == ButtonRelease) {
+	// 	return;
+	// }
+	// if (e->type == ButtonPress) {
+	// 	if (e->xbutton.button==1) {
+	// // 		//Left button is down
+	// // 		//a little time between each bullet
+	// // 		struct timespec bt;
+	// // 		clock_gettime(CLOCK_REALTIME, &bt);
+	// // 		double ts = timeDiff(&g.bulletTimer, &bt);
+	// // 		if (ts > 0.1) {
+	// // 			timeCopy(&g.bulletTimer, &bt);
+	// // 			//shoot a bullet...
+	// // 			if (g.nbullets < MAX_BULLETS) {
+	// // 				Bullet *b = &g.barr[g.nbullets];
+	// // 				timeCopy(&b->time, &bt);
+	// // 				b->pos[0] = g.ship.pos[0];
+	// // 				b->pos[1] = g.ship.pos[1];
+	// // 				b->vel[0] = g.ship.vel[0];
+	// // 				b->vel[1] = g.ship.vel[1];
+	// // 				//convert ship angle to radians
+	// // 				Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
+	// // 				//convert angle to a vector
+	// // 				Flt xdir = cos(rad);
+	// // 				Flt ydir = sin(rad);
+	// // 				b->pos[0] += xdir*20.0f;
+	// // 				b->pos[1] += ydir*20.0f;
+	// // 				b->vel[0] += xdir*6.0f + rnd()*0.1;
+	// // 				b->vel[1] += ydir*6.0f + rnd()*0.1;
+	// // 				b->color[0] = 1.0f;
+	// // 				b->color[1] = 1.0f;
+	// // 				b->color[2] = 1.0f;
+	// // 				++g.nbullets;
+	//  			}
+	//  		}
+
+    if (e->type == ButtonPress) {
+        if (e->xbutton.button == Button1) {
+            gl.keys[Button1] = 1;
+        }
+    }
+    if (e->type == ButtonRelease) {
+        if (e->xbutton.button == Button1) {
+            gl.keys[Button1] = 0;
+        }
+    }
+	 	if (e->xbutton.button==3) {
+	 		//Right button is down
+	 	}
+
 	//keys[XK_Up] = 0;
 	if (savex != e->xbutton.x || savey != e->xbutton.y) {
 		// the mouse moved
@@ -678,6 +712,11 @@ void check_mouse(XEvent *e)
 		savex = 200;
 		savey = 200;
 	}
+
+	if (e->type == MotionNotify) {
+		mousePos[0] = (float)e->xmotion.x;
+		mousePos[1] = (float)(gl.yres - e->xmotion.y);
+	}
 }
 
 int check_keys(XEvent *e)
@@ -703,6 +742,9 @@ int check_keys(XEvent *e)
 			return 0;
 		}
 	}
+	
+
+
 	(void)shift;
 	switch (key) {
 		case XK_Escape:
@@ -732,18 +774,16 @@ int check_keys(XEvent *e)
             // =====================================================
 			break;
         case XK_i:
-            // instructions
+		// instructions
             // -------------------------------------------------------
             // added instructions for space game; has not changed for
             // original asteroids game
             // -------------------------------------------------------
             gl.instructions = !gl.instructions;
-		case XK_Down:
 			break;
-		case XK_equal:
-			break;
-		case XK_minus:
-			break;
+		case XK_space:
+			gl.keys[XK_space] = 1;
+            break;
 	}
 	return 0;
 }
@@ -861,28 +901,77 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 
 void physics()
 {
-	Flt d0,d1,dist;
-	//Update ship position
-	g.ship.pos[0] += g.ship.vel[0];
-	g.ship.pos[1] += g.ship.vel[1];
-    // Check for collision with window edges and stop the ship at the boundary
-    if (g.ship.pos[0] < 0.0f) {
-        g.ship.pos[0] = 0.0f;
-        g.ship.vel[0] = 0.0f;
-    } else if (g.ship.pos[0] > gl.xres) {
-        g.ship.pos[0] = gl.xres;
-        g.ship.vel[0] = 0.0f;
+	 Flt d0,d1,dist;
+	// //Update ship position
+	// g.ship.pos[0] += g.ship.vel[0];
+	// g.ship.pos[1] += g.ship.vel[1];
+    // // Check for collision with window edges and stop the ship at the boundary
+    // if (g.ship.pos[0] < 0.0f) {
+    //     g.ship.pos[0] = 0.0f;
+    //     g.ship.vel[0] = 0.0f;
+    // } else if (g.ship.pos[0] > gl.xres) {
+    //     g.ship.pos[0] = gl.xres;
+    //     g.ship.vel[0] = 0.0f;
+    // }
+
+    // if (g.ship.pos[1] < 0.0f) {
+    //     g.ship.pos[1] = 0.0f;
+    //     g.ship.vel[1] = 0.0f;
+    // } else if (g.ship.pos[1] > gl.yres) {
+    //     g.ship.pos[1] = gl.yres;
+    //     g.ship.vel[1] = 0.0f;
+    // }	
+	// //
+	// //
+
+	// Bullet firing
+
+    if (gl.keys[XK_space]) {  
+        struct timespec bt;
+        clock_gettime(CLOCK_REALTIME, &bt);
+        double ts = timeDiff(&g.bulletTimer, &bt);
+
+        if (ts > 0.01) { // rate of fire
+            timeCopy(&g.bulletTimer, &bt);
+            if (g.nbullets < MAX_BULLETS) {
+                Bullet *b = &g.barr[g.nbullets];
+                timeCopy(&b->time, &bt);
+
+                b->pos[0] = g.ship.pos[0];
+                b->pos[1] = g.ship.pos[1];
+
+                Vec aimDir;
+                aimDir[0] = mousePos[0] - g.ship.pos[0];
+                aimDir[1] = mousePos[1] - g.ship.pos[1];
+
+                float length = sqrt(aimDir[0] * aimDir[0] + aimDir[1] * aimDir[1]);
+                if (length > 0.0f) {
+                    aimDir[0] /= length;
+                    aimDir[1] /= length;
+                } else {
+                    aimDir[0] = 1.0f;
+                    aimDir[1] = 0.0f;
+                }
+
+                b->vel[0] = aimDir[0] * 6.0f + g.ship.vel[0] * 0.5f;
+                b->vel[1] = aimDir[1] * 6.0f + g.ship.vel[1] * 0.5f;
+
+                b->color[0] = 1.0f;
+                b->color[1] = 1.0f;
+                b->color[2] = 1.0f;
+
+                ++g.nbullets;
+            }
+        }
     }
 
-    if (g.ship.pos[1] < 0.0f) {
-        g.ship.pos[1] = 0.0f;
-        g.ship.vel[1] = 0.0f;
-    } else if (g.ship.pos[1] > gl.yres) {
-        g.ship.pos[1] = gl.yres;
-        g.ship.vel[1] = 0.0f;
-    }	
-	//
-	//
+
+
+
+
+
+
+
 	//Update bullet positions
 	struct timespec bt;
 	clock_gettime(CLOCK_REALTIME, &bt);
@@ -921,7 +1010,34 @@ void physics()
     }
     ++i;
 }
-	//
+
+	if (gl.keys[XK_Up] || gl.keys[XK_w]) {
+    	g.ship.vel[1] += 0.1f;  // Up
+	}
+	if (gl.keys[XK_Down] || gl.keys[XK_s]) {
+    	g.ship.vel[1] -= 0.1f;  // Down
+	}
+	if (gl.keys[XK_Left] || gl.keys[XK_a]) {
+    	g.ship.vel[0] -= 0.1f;  // Left
+	}
+	if (gl.keys[XK_Right] || gl.keys[XK_d]) {
+   		g.ship.vel[0] += 0.1f;  // Right
+	}
+
+    g.ship.pos[0] += g.ship.vel[0];
+    g.ship.pos[1] += g.ship.vel[1];
+
+    // adds some friction
+    g.ship.vel[0] *= 0.99f; 
+    g.ship.vel[1] *= 0.99f;
+
+    // keep ship within window
+    if (g.ship.pos[0] < 0) g.ship.pos[0] = 0;
+    if (g.ship.pos[0] > gl.xres) g.ship.pos[0] = gl.xres;
+    if (g.ship.pos[1] < 0) g.ship.pos[1] = 0;
+    if (g.ship.pos[1] > gl.yres) g.ship.pos[1] = gl.yres;
+	
+
 	//Update asteroid positions
 	Asteroid *a = g.ahead;
     while (a) {
@@ -1045,38 +1161,38 @@ void physics()
 			g.ship.vel[1] *= speed;
 		}
 	}
-	if (gl.keys[XK_space]) {
-		//a little time between each bullet
-		struct timespec bt;
-		clock_gettime(CLOCK_REALTIME, &bt);
-		double ts = timeDiff(&g.bulletTimer, &bt);
-		if (ts > 0.1) {
-			timeCopy(&g.bulletTimer, &bt);
-			if (g.nbullets < MAX_BULLETS) {
-				//shoot a bullet...
-				//Bullet *b = new Bullet;
-				Bullet *b = &g.barr[g.nbullets];
-				timeCopy(&b->time, &bt);
-				b->pos[0] = g.ship.pos[0];
-				b->pos[1] = g.ship.pos[1];
-				b->vel[0] = g.ship.vel[0];
-				b->vel[1] = g.ship.vel[1];
-				//convert ship angle to radians
-				Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
-				//convert angle to a vector
-				Flt xdir = cos(rad);
-				Flt ydir = sin(rad);
-				b->pos[0] += xdir*20.0f;
-				b->pos[1] += ydir*20.0f;
-				b->vel[0] += xdir*6.0f + rnd()*0.1;
-				b->vel[1] += ydir*6.0f + rnd()*0.1;
-				b->color[0] = 1.0f;
-				b->color[1] = 1.0f;
-				b->color[2] = 1.0f;
-				g.nbullets++;
-			}
-		}
-	}
+	// if (gl.keys[XK_space]) {
+	// 	//a little time between each bullet
+	// 	struct timespec bt;
+	// 	clock_gettime(CLOCK_REALTIME, &bt);
+	// 	double ts = timeDiff(&g.bulletTimer, &bt);
+	// 	if (ts > 0.1) {
+	// 		timeCopy(&g.bulletTimer, &bt);
+	// 		if (g.nbullets < MAX_BULLETS) {
+	// 			//shoot a bullet...
+	// 			//Bullet *b = new Bullet;
+	// 			Bullet *b = &g.barr[g.nbullets];
+	// 			timeCopy(&b->time, &bt);
+	// 			b->pos[0] = g.ship.pos[0];
+	// 			b->pos[1] = g.ship.pos[1];
+	// 			b->vel[0] = g.ship.vel[0];
+	// 			b->vel[1] = g.ship.vel[1];
+	// 			//convert ship angle to radians
+	// 			Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
+	// 			//convert angle to a vector
+	// 			Flt xdir = cos(rad);
+	// 			Flt ydir = sin(rad);
+	// 			b->pos[0] += xdir*20.0f;
+	// 			b->pos[1] += ydir*20.0f;
+	// 			b->vel[0] += xdir*6.0f + rnd()*0.1;
+	// 			b->vel[1] += ydir*6.0f + rnd()*0.1;
+	// 			b->color[0] = 1.0f;
+	// 			b->color[1] = 1.0f;
+	// 			b->color[2] = 1.0f;
+	// 			g.nbullets++;
+	// 		}
+	// 	}
+	// }
 	if (g.mouseThrustOn) {
 		//should thrust be turned off
 		struct timespec mtt;
@@ -1226,6 +1342,37 @@ void handlePauseMenuInput() {
     }
 }
 
+void drawUFO(float x, float y) {
+	float w = 32.0f, h = 32.0f;
+
+    glPushMatrix();
+    glTranslatef(x, y, 0);
+    
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, g.ufoTexture);
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.1f);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(-w, -h);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(-w,  h);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f( w,  h);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f( w, -h);
+    glEnd();
+
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glPopMatrix();
+	glEnable(GL_TEXTURE_2D);
+}
+
+void cleanupTextures() {
+    glDeleteTextures(1, &g.ufoTexture);
+}
+
 void render()
 {
 	Rect r;
@@ -1280,22 +1427,27 @@ void render()
 
 	//-------------------------------------------------------------------------
 	//Draw the ship
-	glColor3fv(g.ship.color);
-	glPushMatrix();
-	glTranslatef(g.ship.pos[0], g.ship.pos[1], g.ship.pos[2]);
-	//float angle = atan2(ship.dir[1], ship.dir[0]);
-	glRotatef(g.ship.angle, 0.0f, 0.0f, 1.0f);
-	glBegin(GL_TRIANGLES);
-	//glVertex2f(-10.0f, -10.0f);
-	//glVertex2f(  0.0f, 20.0f);
-	//glVertex2f( 10.0f, -10.0f);
-	glVertex2f(-12.0f, -10.0f);
-	glVertex2f(  0.0f,  20.0f);
-	glVertex2f(  0.0f,  -6.0f);
-	glVertex2f(  0.0f,  -6.0f);
-	glVertex2f(  0.0f,  20.0f);
-	glVertex2f( 12.0f, -10.0f);
-	glEnd();
+	// glColor3fv(g.ship.color);
+	// glPushMatrix();
+	// glTranslatef(g.ship.pos[0], g.ship.pos[1], g.ship.pos[2]);
+	// //float angle = atan2(ship.dir[1], ship.dir[0]);
+	// glRotatef(g.ship.angle, 0.0f, 0.0f, 1.0f);
+	// glBegin(GL_TRIANGLES);
+	// //glVertex2f(-10.0f, -10.0f);
+	// //glVertex2f(  0.0f, 20.0f);
+	// //glVertex2f( 10.0f, -10.0f);
+	// glVertex2f(-12.0f, -10.0f);
+	// glVertex2f(  0.0f,  20.0f);
+	// glVertex2f(  0.0f,  -6.0f);
+	// glVertex2f(  0.0f,  -6.0f);
+	// glVertex2f(  0.0f,  20.0f);
+	// glVertex2f( 12.0f, -10.0f);
+	// glEnd();
+
+	drawUFO(g.ship.pos[0], g.ship.pos[1]);
+
+
+	glEnable(GL_TEXTURE_2D);
 	glColor3f(1.0f, 0.0f, 0.0f);
 	glBegin(GL_POINTS);
 	glVertex2f(0.0f, 0.0f);
@@ -1322,6 +1474,7 @@ void render()
 		}
 		glEnd();
 	}
+	glEnable(GL_TEXTURE_2D);
 	//-------------------------------------------------------------------------
 	//Draw the asteroids
 	{
@@ -1350,6 +1503,7 @@ void render()
 			a = a->next;
 		}
 	}
+	glEnable(GL_TEXTURE_2D);
 	//-------------------------------------------------------------------------
 	//Draw the bullets
 	for (int i=0; i<g.nbullets; i++) {
@@ -1369,8 +1523,8 @@ void render()
 		glVertex2f(b->pos[0]+1.0f, b->pos[1]+1.0f);
 		glEnd();
 	}
-
     drawHealthBar(g.ship.health);
+	glEnable(GL_TEXTURE_2D);
     
 }
 
