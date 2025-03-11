@@ -1,14 +1,11 @@
 //
-//program: space.cpp
-//author: team 7
-//framework program: asteroids.cpp
-//framework author:  Gordon Griesel
+//program: asteroids.cpp
+//author:  Gordon Griesel
 //date:    2014 - 2025
+//mod spring 2015: added constructors
+//This program is a game starting point for a 3350 project.
 //
-//------------------------------------------------------------
-//changes made:
 //
-//------------------------------------------------------------
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -17,20 +14,12 @@
 #include <cmath>
 #include <X11/Xlib.h>
 //#include <X11/Xutil.h>
-#include <GL/gl.h>
+//#include <GL/gl.h>
 //#include <GL/glu.h>
-#include <GL/glx.h>
 #include <X11/keysym.h>
+#include <GL/glx.h>
 #include "log.h"
 #include "fonts.h"
-#include "texture.h"
-
-//texture variables
-//GLuint ufoTexture;
-//int ufoWidth, ufoHeight;
-
-
-using namespace std; 
 
 //defined types
 typedef float Flt;
@@ -47,7 +36,6 @@ typedef Flt	Matrix[4][4];
 #define VecSub(a,b,c) (c)[0]=(a)[0]-(b)[0]; \
 						(c)[1]=(a)[1]-(b)[1]; \
 						(c)[2]=(a)[2]-(b)[2]
-
 //constants
 const float timeslice = 1.0f;
 const float gravity = -0.2f;
@@ -74,7 +62,6 @@ public:
 	char keys[65536];
 	int mouse_cursor_on;
 	int credits;
-    int instructions;
     Global() {
 		xres = 640;
 		yres = 480;
@@ -82,7 +69,6 @@ public:
 		// mouse value 1 = true = mouse is a regular mouse.
 		mouse_cursor_on = 1;
         credits = 0;
-        instructions = 0;
 	}
 } gl;
 
@@ -94,7 +80,6 @@ public:
 	Vec acc;
 	float angle;
 	float color[3];
-    float health;   // 100 = full health, 0 = empty
 public:
 	Ship() {
 		pos[0] = (Flt)(gl.xres/2);
@@ -105,20 +90,7 @@ public:
 		VecZero(acc);
 		angle = 0.0;
 		color[0] = color[1] = color[2] = 1.0;
-        health = 1.0; 
 	}
-
-    void takeDamage(int damage) {
-        health -= damage;
-        if (health < 0)
-            health = 0;
-    }
-
-    void heal(int amount) {
-        health += amount;
-        if (health > 1.0)
-            health = 1.0;
-    }
 };
 
 class Bullet {
@@ -152,68 +124,33 @@ public:
 
 class Game {
 public:
-    GLuint stardustTexture;
-    GLuint ufoTexture;
 	Ship ship;
 	Asteroid *ahead;
 	Bullet *barr;
-    int showStardust;
 	int nasteroids;
 	int nbullets;
-    int nenemies;   // number of enemies for endless mode
 	struct timespec bulletTimer;
 	struct timespec mouseThrustTimer;
 	bool mouseThrustOn;
-    // -----------------------------------
-    // add menu related variables
-    // -----------------------------------
-    enum GameMode {
-        MAIN_MENU,
-        ENDLESS_MODE,
-        BOSS_MODE,
-        PAUSE_MENU
-    };
-    GameMode gameMode;
-    bool inMenu;
-    int menuSelection;
-    bool isPaused;
-    bool prevKeys[65536];
 public:
 	Game() {
-        showStardust = 0;
 		ahead = NULL;
 		barr = new Bullet[MAX_BULLETS];
 		nasteroids = 0;
 		nbullets = 0;
-        nenemies = 0;
 		mouseThrustOn = false;
-        // -------------------------------------------------
-        // initialize menu variables
-        // ------------------------------------------------
-        inMenu = true;  // start in the menu
-        gameMode = MAIN_MENU;
-        menuSelection = 0;  // default selection is Endless mode
-        isPaused = false;
-        memset(prevKeys, 0, sizeof(prevKeys));
-		//build 2 asteroids...
-		for (int j=0; j<5; j++) {
+		//build 10 asteroids...
+		for (int j=0; j<10; j++) {
 			Asteroid *a = new Asteroid;
 			a->nverts = 8;
 			a->radius = rnd()*80.0 + 40.0;
-			//Flt r2 = a->radius / 2.0;
+			Flt r2 = a->radius / 2.0;
 			Flt angle = 0.0f;
 			Flt inc = (PI * 2.0) / (Flt)a->nverts;
 			for (int i=0; i<a->nverts; i++) {
-	
-                a->vert[i][0] = sin(angle) * a->radius;
-                a->vert[i][1] = cos(angle) * a->radius;
-                angle += inc;
-            
-                
-                
-                //		a->vert[i][0] = sin(angle) * (r2 + rnd() * a->radius);
-		//		a->vert[i][1] = cos(angle) * (r2 + rnd() * a->radius);
-		//		angle += inc;
+				a->vert[i][0] = sin(angle) * (r2 + rnd() * a->radius);
+				a->vert[i][1] = cos(angle) * (r2 + rnd() * a->radius);
+				angle += inc;
 			}
 			a->pos[0] = (Flt)(rand() % gl.xres);
 			a->pos[1] = (Flt)(rand() % gl.yres);
@@ -237,67 +174,8 @@ public:
 	}
 	~Game() {
 		delete [] barr;
-    }
+	}
 } g;
-
-class Image {
-public:
-    int width, height;
-    unsigned char *data;
-    ~Image() { delete [] data; }
-    Image(const char *fname) {
-        if (fname[0] == '\0')
-            return;
-        //printf("fname **%s**\n", fname);
-        int ppmFlag = 0;
-        char name[40];
-        strcpy(name, fname);
-        int slen = strlen(name);
-        char ppmname[80];
-        if (strncmp(name+(slen-4), ".ppm", 4) == 0)
-            ppmFlag = 1;
-        if (ppmFlag) {
-            strcpy(ppmname, name);
-        } else {
-            name[slen-4] = '\0';
-            //printf("name **%s**\n", name);
-            sprintf(ppmname,"%s.ppm", name);
-            //printf("ppmname **%s**\n", ppmname);
-            char ts[100];
-            //system("convert eball.jpg eball.ppm");
-            sprintf(ts, "convert %s %s", fname, ppmname);
-            system(ts);
-        }   
-        //sprintf(ts, "%s", name);
-        FILE *fpi = fopen(ppmname, "r");
-        if (fpi) {
-            char line[200];
-            fgets(line, 200, fpi);
-            fgets(line, 200, fpi);
-            //skip comments and blank lines
-            while (line[0] == '#' || strlen(line) < 2)
-                fgets(line, 200, fpi);
-            sscanf(line, "%i %i", &width, &height);
-            fgets(line, 200, fpi);
-            //get pixel data
-            int n = width * height * 3;
-            data = new unsigned char[n];
-            for (int i=0; i<n; i++)
-                data[i] = fgetc(fpi);
-            fclose(fpi);
-        } else {
-            printf("ERROR opening image: %s\n",ppmname);
-            exit(0);
-        }   
-        if (!ppmFlag)
-            unlink(ppmname);
-    }   
-};
-Image img[2] = { 
-"./images/stardust-health.png",
-"./images/ufo.png"
-};
-
 
 //X Windows variables
 class X11_wrapper {
@@ -364,7 +242,7 @@ public:
 	void set_title() {
 		//Set the window title bar.
 		XMapWindow(dpy, win);
-		XStoreName(dpy, win, "Space Busters");
+		XStoreName(dpy, win, "Asteroids template");
 	}
 	void check_resize(XEvent *e) {
 		//The ConfigureNotify is sent by the
@@ -437,13 +315,6 @@ void check_mouse(XEvent *e);
 int check_keys(XEvent *e);
 void physics();
 void render();
-void drawHealthBar(float health);
-void renderMenu();
-//void drawMenu();
-void handleMainMenuInput();
-void handlePauseMenuInput();
-void drawPauseMenu();
-
 
 //==========================================================================
 // M A I N
@@ -473,57 +344,13 @@ int main()
 			physics();
 			physicsCountdown -= physicsRate;
 		}
-		//render();
-		renderMenu();
-        x11.swapBuffers();
+		render();
+		x11.swapBuffers();
 	}
 	cleanup_fonts();
 	logClose();
 	return 0;
 }
-
-unsigned char *buildAlphaData(Image *img)
-{
-    //Add 4th component to an RGB stream...
-    //RGBA
-    //When you do this, OpenGL is able to use the A component to determine
-    //transparency information.
-    //It is used in this application to erase parts of a texture-map from view.
-    int i;
-    int a,b,c;
-    unsigned char *newdata, *ptr;
-    unsigned char *data = (unsigned char *)img->data;
-    newdata = (unsigned char *)malloc(img->width * img->height * 4);
-    ptr = newdata;
-    for (i=0; i<img->width * img->height * 3; i+=3) {
-        a = *(data+0);
-        b = *(data+1);
-        c = *(data+2);
-        *(ptr+0) = a;
-        *(ptr+1) = b;
-        *(ptr+2) = c;
-        //-----------------------------------------------
-        //get largest color component...
-        //*(ptr+3) = (unsigned char)((
-        //      (int)*(ptr+0) +
-        //      (int)*(ptr+1) +
-        //      (int)*(ptr+2)) / 3);
-        //d = a;
-        //if (b >= a && b >= c) d = b;
-        //if (c >= a && c >= b) d = c;
-        //*(ptr+3) = d;
-        //-----------------------------------------------
-        //this code optimizes the commented code above.
-        //code contributed by student: Chris Smith
-        //
-        *(ptr+3) = (a|b|c);
-        //-----------------------------------------------
-        ptr += 4;
-        data += 3;
-    }
-    return newdata;
-}
-
 
 void init_opengl(void)
 {
@@ -541,12 +368,11 @@ void init_opengl(void)
 	glDisable(GL_CULL_FACE);
 	//
 	//Clear the screen to black
-	glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
 	//Do this to allow fonts
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
 }
-
 
 void normalize2d(Vec v)
 {
@@ -692,11 +518,7 @@ int check_keys(XEvent *e)
 	(void)shift;
 	switch (key) {
 		case XK_Escape:
-		//	return 1;
-            if (!g.inMenu)
-                g.isPaused = !g.isPaused;
-            //renderMenu();
-            break;
+			return 1;
 		case XK_m:
 			gl.mouse_cursor_on = !gl.mouse_cursor_on;
 			x11.show_mouse_cursor(gl.mouse_cursor_on);
@@ -717,13 +539,6 @@ int check_keys(XEvent *e)
             //gl.credits = ~gl.credits;   // bitwise not
             // =====================================================
 			break;
-        case XK_i:
-            // instructions
-            // -------------------------------------------------------
-            // added instructions for space game; has not changed for
-            // original asteroids game
-            // -------------------------------------------------------
-            gl.instructions = !gl.instructions;
 		case XK_Down:
 			break;
 		case XK_equal:
@@ -766,23 +581,17 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 	//build ta from a
 	ta->nverts = 8;
 	ta->radius = a->radius / 2.0;
-	// Flt r2 = ta->radius / 2.0; removed to make circles
+	Flt r2 = ta->radius / 2.0;
 	Flt angle = 0.0f;
-	Flt inc = (PI * 2.0) / ta->nverts; //(Flt)ta->nverts;
-
+	Flt inc = (PI * 2.0) / (Flt)ta->nverts;
 	for (int i=0; i<ta->nverts; i++) {
-		a->vert[i][0] = sin(angle) * ta->radius;
-        a->vert[i][1] = cos(angle) * ta->radius;
-        angle += inc;
-        
-        
-        //ta->vert[i][0] = sin(angle) * (r2 + rnd() * ta->radius);
-		//ta->vert[i][1] = cos(angle) * (r2 + rnd() * ta->radius);
-		//angle += inc;
+		ta->vert[i][0] = sin(angle) * (r2 + rnd() * ta->radius);
+		ta->vert[i][1] = cos(angle) * (r2 + rnd() * ta->radius);
+		angle += inc;
 	}
 	ta->pos[0] = a->pos[0] + rnd()*10.0-5.0;
 	ta->pos[1] = a->pos[1] + rnd()*10.0-5.0;
-	//ta->pos[2] = 0.0f;
+	ta->pos[2] = 0.0f;
 	ta->angle = 0.0;
 	ta->rotate = a->rotate + (rnd() * 4.0 - 2.0);
 	ta->color[0] = 0.8;
@@ -791,61 +600,7 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 	ta->vel[0] = a->vel[0] + (rnd()*2.0-1.0);
 	ta->vel[1] = a->vel[1] + (rnd()*2.0-1.0);
 	//std::cout << "frag" << std::endl;
-    ta->prev = NULL; //adjusting link pointer
-    ta->next = NULL; //adjusting link pointer
 }
-
-// --------------------------------------------------------------------
-// added health bar function 
-// --------------------------------------------------------------------
-/*void drawHealthBar(float health) 
-{
-    if (health > 1.0f) 
-        health = 1.0f;
-    if (health < 0.0f)
-        health = 0.0f;
-
-    // position for health bar at bottom right corner
-    float healthBarWidth = 200.0f;
-    float healthBarHeight = 15.0f;
-    float barX = gl.xres - healthBarWidth - 10;     // shows 10px from the right
-    float barY = 10;    // shows 10px from the bottom
-
-    Rect r;
-    r.bot = barY + healthBarHeight + 5;
-    r.left = barX;
-    r.center = 0;
-    ggprint8b(&r, 16, 0x00ffff00, "HEALTH");
-
-    // draw background bar (r, g, b)
-    glColor3f(0.0f, 0.0f, 0.0f);    // black
-    glBegin(GL_QUADS);
-    glVertex2f(barX, barY);
-    glVertex2f(barX + healthBarWidth, barY);
-    glVertex2f(barX + healthBarWidth, barY + healthBarHeight);
-    glVertex2f(barX, barY + healthBarHeight);
-    glEnd();
-
-    // draw red health bar based on current ship health
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glBegin(GL_QUADS);
-    glVertex2f(barX, barY);
-    glVertex2f(barX + (healthBarWidth * g.ship.health), barY);
-    glVertex2f(barX + (healthBarWidth * g.ship.health), barY + healthBarHeight);
-    glVertex2f(barX, barY + healthBarHeight);
-    glEnd();
-
-    // draw black lines to represent increments of health lost
-    glColor3f(0.0f, 0.0f, 0.0f);
-    float lineSpacing = healthBarWidth / 10.0f;
-    for (int i = 1; i < 10; i++) {
-        float xPos = barX + i * lineSpacing;
-        glBegin(GL_LINES);
-        glVertex2f(xPos, barY);
-        glVertex2f(xPos, barY + healthBarHeight);
-        glEnd();
-    }
-}*/
 
 void physics()
 {
@@ -853,21 +608,22 @@ void physics()
 	//Update ship position
 	g.ship.pos[0] += g.ship.vel[0];
 	g.ship.pos[1] += g.ship.vel[1];
-	//Check for collision with window edges
-	if (g.ship.pos[0] < 0.0) {
-		g.ship.pos[0] += (float)gl.xres;
-	}
-	else if (g.ship.pos[0] > (float)gl.xres) {
-		g.ship.pos[0] -= (float)gl.xres;
-	}
-	else if (g.ship.pos[1] < 0.0) {
-		g.ship.pos[1] += (float)gl.yres;
-	}
-	else if (g.ship.pos[1] > (float)gl.yres) {
-		g.ship.pos[1] -= (float)gl.yres;
-	}
-	//
-	//
+    // Check for collision with window edges and stop the ship at the boundary
+    if (g.ship.pos[0] < 0.0f) {
+        g.ship.pos[0] = 0.0f;
+        g.ship.vel[0] = 0.0f;
+    } else if (g.ship.pos[0] > gl.xres) {
+        g.ship.pos[0] = gl.xres;
+        g.ship.vel[0] = 0.0f;
+    }
+
+    if (g.ship.pos[1] < 0.0f) {
+        g.ship.pos[1] = 0.0f;
+        g.ship.vel[1] = 0.0f;
+    } else if (g.ship.pos[1] > gl.yres) {
+        g.ship.pos[1] = gl.yres;
+        g.ship.vel[1] = 0.0f;
+    }
 	//Update bullet positions
 	struct timespec bt;
 	clock_gettime(CLOCK_REALTIME, &bt);
@@ -887,7 +643,7 @@ void physics()
 		//move the bullet
 		b->pos[0] += b->vel[0];
 		b->pos[1] += b->vel[1];
-		// bouncy bullets
+		// Bounce off the left/right boundaries
     	if (b->pos[0] < 0.0f) {
         	b->pos[0] = 0.0f;
         	b->vel[0] = -b->vel[0];
@@ -896,38 +652,44 @@ void physics()
         	b->vel[0] = -b->vel[0];
     }
 
-    	// bullets bounce off the edges
-    	if (b->pos[1] < 0.0f) {
-        	b->pos[1] = 0.0f;
-        	b->vel[1] = -b->vel[1];
-    	} else if (b->pos[1] > (float)gl.yres) {
-        	b->pos[1] = gl.yres;
-        	b->vel[1] = -b->vel[1];
+    // Bounce off the top/bottom boundaries
+    if (b->pos[1] < 0.0f) {
+        b->pos[1] = 0.0f;
+        b->vel[1] = -b->vel[1];
+    } else if (b->pos[1] > (float)gl.yres) {
+        b->pos[1] = gl.yres;
+        b->vel[1] = -b->vel[1];
     }
     ++i;
 }
-	//
-	//Update asteroid positions
-	Asteroid *a = g.ahead;
-	while (a) {
-		a->pos[0] += a->vel[0];
-		a->pos[1] += a->vel[1];
-		//Check for collision with window edges
-		if (a->pos[0] < -100.0) {
-			a->pos[0] += (float)gl.xres+200;
-		}
-		else if (a->pos[0] > (float)gl.xres+100) {
-			a->pos[0] -= (float)gl.xres+200;
-		}
-		else if (a->pos[1] < -100.0) {
-			a->pos[1] += (float)gl.yres+200;
-		}
-		else if (a->pos[1] > (float)gl.yres+100) {
-			a->pos[1] -= (float)gl.yres+200;
-		}
-		a->angle += a->rotate;
-		a = a->next;
-	}
+    // Update asteroid positions
+    Asteroid *a = g.ahead;
+    while (a) {
+        a->pos[0] += a->vel[0];
+        a->pos[1] += a->vel[1];
+
+        // Bounce off the left/right boundaries
+        if (a->pos[0] - a->radius < 0.0f) {
+            a->pos[0] = a->radius;     
+            a->vel[0] = -a->vel[0];    
+        } else if (a->pos[0] + a->radius > gl.xres) {
+        a->pos[0] = gl.xres - a->radius; 
+        a->vel[0] = -a->vel[0];
+    }
+
+        // this is to bounce off the top and bottom edges
+		    if (a->pos[1] - a->radius < 0.0f) {
+            a->pos[1] = a->radius;     
+            a->vel[1] = -a->vel[1];   
+        } else if (a->pos[1] + a->radius > gl.yres) {
+            a->pos[1] = gl.yres - a->radius; 
+            a->vel[1] = -a->vel[1];
+    }
+
+    a->angle += a->rotate;
+    a = a->next;
+}
+	
 	//
 	//Asteroid collision with bullets?
 	//If collision detected:
@@ -950,7 +712,7 @@ void physics()
 					//break it into pieces.
 					Asteroid *ta = a;
 					buildAsteroidFragment(ta, a);
-					int r = rand()%10+2;
+					int r = rand()%10+5;
 					for (int k=0; k<r; k++) {
 						//get the next asteroid position in the array
 						Asteroid *ta = new Asteroid;
@@ -1058,143 +820,6 @@ void physics()
 	}
 }
 
-// -------------------------------------------------------------------
-// add updateGame logic to implement health bar functionality
-// -------------------------------------------------------------------
-void updateGame() {
-    
-}
-
-// -------------------------------------------------------------------
-// add menu screen to choose endless mode or boss mode before starting
-// -------------------------------------------------------------------
-void drawMenu() {
-    Rect r;
-    glClear(GL_COLOR_BUFFER_BIT);
-    r.bot = gl.yres / 2;
-    r.left = gl.xres / 2 - 100;
-    r.center = 0;
-    
-    // title
-    ggprint8b(&r, 32, 0x00ffff00, "SPACE BUSTERS");
-    ggprint8b(&r, 24, 0x00ffff00, "Game Menu");
-
-    // options
-    ggprint8b(&r, 16, (g.menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Endless Mode");
-    ggprint8b(&r, 16, (g.menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, "Boss Mode");
-    ggprint8b(&r, 16, (g.menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Exit");
-
-}
-
-//-----------------------------------------------------------------
-// add pause menu
-//-----------------------------------------------------------------
-void drawPauseMenu() {
-    // draw "resume", "main menu", and "exit" options
-    Rect r;
-    r.bot = gl.yres / 2;
-    r.left = gl.xres / 2 - 100;
-    r.center = 0;
-
-    ggprint8b(&r, 24, 0x00ffff00, "Pause Menu");
-    ggprint8b(&r, 16, (g.menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Resume");
-    ggprint8b(&r, 16, (g.menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, "Return to Main Menu");
-    ggprint8b(&r, 16, (g.menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Exit");
-
-}
- 
-//----------------------------------------------------------------
-//added function to render menu before game and pause menu during
-//----------------------------------------------------------------
-void renderMenu() {
-    if (g.inMenu) {
-        //extern void drawMenu();
-        drawMenu();
-        handleMainMenuInput();
-        return;
-    } 
-    
-    if (g.isPaused) {
-        // pause menu logic
-        //extern void drawPauseMenu();
-        drawPauseMenu();
-        handlePauseMenuInput();
-        return;
-    }
-
-    if (g.gameMode == Game::ENDLESS_MODE) {
-        // add calls to functions that spawn certain enemies, etc..
-        render();
-    } else if (g.gameMode == Game::BOSS_MODE) {
-        // add calls to functions that spawns boss enemy, etc..
-        render();        
-    }
-}
-
-//---------------------------------------------------------------
-//added function to handle main menu choices
-//--------------------------------------------------------------
-void handleMainMenuInput() {
-    // handle menu navigation with keyboard input
-    if (gl.keys[XK_Up] && !g.prevKeys[XK_Up]) 
-        g.menuSelection = (g.menuSelection == 0) ? 2 : g.menuSelection - 1; 
-    if (gl.keys[XK_Down] && !g.prevKeys[XK_Down])
-        g.menuSelection = (g.menuSelection == 2) ? 0 : g.menuSelection + 1;
-        //g.menuSelection ^= 1;   //XOR to toggle between 0 and 1
-    
-    // update prevKeys; prevents multiple presses per key press
-    memcpy(g.prevKeys, gl.keys, sizeof(gl.keys));
-
-    // confirm selection with Enter key
-    if (gl.keys[XK_Return]) {
-        g.inMenu = false;
-
-        // start selected game mode
-        switch (g.menuSelection) {
-            case 0: // endless mode
-                g.gameMode = Game::ENDLESS_MODE;
-                break;
-            case 1: // boss mode
-                g.gameMode = Game::BOSS_MODE;
-                break;
-            case 2: // exit
-                exit(0);
-                break;
-        }
-    }
-}
-
-// ---------------------------------------------------------
-// add function to handle pause menu input
-// ---------------------------------------------------------
-void handlePauseMenuInput() {
-    if (gl.keys[XK_Up] && !g.prevKeys[XK_Up])
-        g.menuSelection = (g.menuSelection == 0) ? 2 : g.menuSelection - 1;
-    if (gl.keys[XK_Down] && !g.prevKeys[XK_Down]) 
-        g.menuSelection = (g.menuSelection == 2) ? 0 : g.menuSelection + 1;
-
-    // update prevKeys; prevents multiple presses per key press
-    memcpy(g.prevKeys, gl.keys, sizeof(gl.keys));
-
-    // selecting option
-    if (gl.keys[XK_Return]) {
-        g.isPaused = false;
-        switch (g.menuSelection) {
-            case 0: // resume
-                g.isPaused = false;
-                break;
-            case 1: // go to main menu
-                g.inMenu = true;
-                g.isPaused = false;
-                //renderMenu();
-                g.gameMode = Game::MAIN_MENU;
-                break;
-            case 2: // exit game
-                exit(0);
-                break;
-        }
-    }
-}
 
 void render()
 {
@@ -1204,14 +829,10 @@ void render()
 	r.bot = gl.yres - 20;
 	r.left = 10;
 	r.center = 0;
-	//ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
-    //ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g.nasteroids);
-    // ----------------------------------------------------------------
-    // ggprint8b(&r, 16, 0x00ffff00, "enemies left: %i", g.nenemies);
-    // ----------------------------------------------------------------
+	ggprint8b(&r, 16, 0x00ff0000, "3350 - Asteroids");
+	ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
+    ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g.nasteroids);
     ggprint8b(&r, 16, 0x00ffff00, "Press c for Credits");
-    ggprint8b(&r, 16, 0x00ffff00, "Press i for Instructions");
-
     if (gl.credits) {
         extern void show_christine(Rect *r);
         extern void show_davalos(Rect *r);
@@ -1224,12 +845,6 @@ void render()
         show_bbarrios(&r);
         show_mgarris(&r);
     }
-
-    if (gl.instructions) {
-        extern void show_instructions(Rect *r);
-        show_instructions(&r);
-    }
-
 	//-------------------------------------------------------------------------
 	//Draw the ship
 	glColor3fv(g.ship.color);
@@ -1253,7 +868,7 @@ void render()
 	glVertex2f(0.0f, 0.0f);
 	glEnd();
 	glPopMatrix();
-	if (gl.keys[XK_Up] || g.mouseThrustOn || gl.keys[XK_Down]) {
+	if (gl.keys[XK_Up] || g.mouseThrustOn) {
 		int i;
 		//draw thrust
 		Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
@@ -1321,9 +936,6 @@ void render()
 		glVertex2f(b->pos[0]+1.0f, b->pos[1]+1.0f);
 		glEnd();
 	}
-
-    drawHealthBar(g.ship.health);
-    
 }
 
 
