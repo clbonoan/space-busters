@@ -212,7 +212,7 @@ public:
         //==============================================
         memset(prevKeys, 0, sizeof(prevKeys));
 		//build 2 asteroids...
-		for (int j=0; j<5; j++) {
+		for (int j=0; j<8; j++) {
 			Asteroid *a = new Asteroid;
 			a->nverts = 8;
 			a->radius = rnd()*80.0 + 40.0;
@@ -223,10 +223,7 @@ public:
 	
                 a->vert[i][0] = sin(angle) * a->radius;
                 a->vert[i][1] = cos(angle) * a->radius;
-                angle += inc;
-            
-                
-                
+                angle += inc;             
                 //		a->vert[i][0] = sin(angle) * (r2 + rnd() * a->radius);
 		//		a->vert[i][1] = cos(angle) * (r2 + rnd() * a->radius);
 		//		angle += inc;
@@ -788,8 +785,8 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 	Flt inc = (PI * 2.0) / ta->nverts; //(Flt)ta->nverts;
 
 	for (int i=0; i<ta->nverts; i++) {
-		a->vert[i][0] = sin(angle) * ta->radius;
-        a->vert[i][1] = cos(angle) * ta->radius;
+		ta->vert[i][0] = sin(angle) * ta->radius;
+        ta->vert[i][1] = cos(angle) * ta->radius;
         angle += inc;
         
         
@@ -808,8 +805,6 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 	ta->vel[0] = a->vel[0] + (rnd()*2.0-1.0);
 	ta->vel[1] = a->vel[1] + (rnd()*2.0-1.0);
 	//std::cout << "frag" << std::endl;
-    ta->prev = NULL; //adjusting link pointer
-    ta->next = NULL; //adjusting link pointer
 }
 
 // --------------------------------------------------------------------
