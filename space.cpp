@@ -152,6 +152,13 @@ public:
 
 class Game {
 public:
+    //==============================================
+    //track score
+    //==============================================
+    //
+    int score;
+    //
+    //==============================================
     GLuint stardustTexture;
     GLuint ufoTexture;
 	Ship ship;
@@ -194,6 +201,13 @@ public:
         gameMode = MAIN_MENU;
         menuSelection = 0;  // default selection is Endless mode
         isPaused = false;
+        //==============================================
+        //track score
+        //==============================================
+        //
+        score = 0;
+        //
+        //==============================================
         memset(prevKeys, 0, sizeof(prevKeys));
 		//build 2 asteroids...
 		for (int j=0; j<5; j++) {
@@ -951,7 +965,14 @@ void physics()
 			d1 = b->pos[1] - a->pos[1];
 			dist = (d0*d0 + d1*d1);
 			if (dist < (a->radius*a->radius)) {
-				//std::cout << "asteroid hit." << std::endl;
+				//===================================================
+                //tracks score: adds point after shooting an enemy
+                //===================================================
+                //
+                g.score += 5;
+                //
+                //===================================================
+                //std::cout << "asteroid hit." << std::endl;
 				//this asteroid is hit.
 				if (a->radius > MINIMUM_ASTEROID_SIZE) {
 					//break it into pieces.
@@ -1218,6 +1239,24 @@ void render()
     // ----------------------------------------------------------------
     ggprint8b(&r, 16, 0x00ffff00, "Press c for Credits");
     ggprint8b(&r, 16, 0x00ffff00, "Press i for Instructions");
+
+    //=================================================================
+    //track score: score display
+    //=================================================================
+    //
+    r.bot = gl.yres - 20;
+    r.left = gl.xres - 100;
+    r.center = 0;
+    ggprint8b(&r, 16, 0x00ffffff, "SCORE: %d", g.score);
+    //
+    //=================================================================
+    //positioning reset
+    //=================================================================
+    r.left = 10;
+    r.bot = gl.yres - 60;
+    //
+    //
+    //=================================================================
 
     if (gl.credits) {
         extern void show_christine(Rect *r);
