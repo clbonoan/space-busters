@@ -200,7 +200,7 @@ public:
 			Asteroid *a = new Asteroid;
 			a->nverts = 8;
 			a->radius = rnd()*80.0 + 40.0;
-			Flt r2 = a->radius / 2.0;
+//			Flt r2 = a->radius / 2.0;
 			Flt angle = 0.0f;
 			Flt inc = (PI * 2.0) / (Flt)a->nverts;
 			for (int i=0; i<a->nverts; i++) {
@@ -853,19 +853,22 @@ void physics()
 	//Update ship position
 	g.ship.pos[0] += g.ship.vel[0];
 	g.ship.pos[1] += g.ship.vel[1];
-	//Check for collision with window edges
-	if (g.ship.pos[0] < 0.0) {
-		g.ship.pos[0] += (float)gl.xres;
-	}
-	else if (g.ship.pos[0] > (float)gl.xres) {
-		g.ship.pos[0] -= (float)gl.xres;
-	}
-	else if (g.ship.pos[1] < 0.0) {
-		g.ship.pos[1] += (float)gl.yres;
-	}
-	else if (g.ship.pos[1] > (float)gl.yres) {
-		g.ship.pos[1] -= (float)gl.yres;
-	}
+    // Check for collision with window edges and stop the ship at the boundary
+    if (g.ship.pos[0] < 0.0f) {
+        g.ship.pos[0] = 0.0f;
+        g.ship.vel[0] = 0.0f;
+    } else if (g.ship.pos[0] > gl.xres) {
+        g.ship.pos[0] = gl.xres;
+        g.ship.vel[0] = 0.0f;
+    }
+
+    if (g.ship.pos[1] < 0.0f) {
+        g.ship.pos[1] = 0.0f;
+        g.ship.vel[1] = 0.0f;
+    } else if (g.ship.pos[1] > gl.yres) {
+        g.ship.pos[1] = gl.yres;
+        g.ship.vel[1] = 0.0f;
+    }	
 	//
 	//
 	//Update bullet positions
@@ -905,25 +908,33 @@ void physics()
 	//
 	//Update asteroid positions
 	Asteroid *a = g.ahead;
-	while (a) {
-		a->pos[0] += a->vel[0];
-		a->pos[1] += a->vel[1];
-		//Check for collision with window edges
-		if (a->pos[0] < -100.0) {
-			a->pos[0] += (float)gl.xres+200;
-		}
-		else if (a->pos[0] > (float)gl.xres+100) {
-			a->pos[0] -= (float)gl.xres+200;
-		}
-		else if (a->pos[1] < -100.0) {
-			a->pos[1] += (float)gl.yres+200;
-		}
-		else if (a->pos[1] > (float)gl.yres+100) {
-			a->pos[1] -= (float)gl.yres+200;
-		}
-		a->angle += a->rotate;
-		a = a->next;
-	}
+    while (a) {
+        a->pos[0] += a->vel[0];
+        a->pos[1] += a->vel[1];
+
+        // Bounce off the left/right boundaries
+        if (a->pos[0] - a->radius < 0.0f) {
+            a->pos[0] = a->radius;     
+            a->vel[0] = -a->vel[0];    
+        } else if (a->pos[0] + a->radius > gl.xres) {
+        a->pos[0] = gl.xres - a->radius; 
+        a->vel[0] = -a->vel[0];
+    }
+
+        // this is to bounce off the top and bottom edges
+		    if (a->pos[1] - a->radius < 0.0f) {
+            a->pos[1] = a->radius;     
+            a->vel[1] = -a->vel[1];   
+        } else if (a->pos[1] + a->radius > gl.yres) {
+            a->pos[1] = gl.yres - a->radius; 
+            a->vel[1] = -a->vel[1];
+    }
+
+    a->angle += a->rotate;
+    a = a->next;
+   
+    }
+    //extra comment
 	//
 	//Asteroid collision with bullets?
 	//If collision detected:
