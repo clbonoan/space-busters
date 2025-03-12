@@ -70,6 +70,7 @@ extern void timeCopy(struct timespec *dest, struct timespec *source);
 
 Vec mousePos = {0, 0, 0};
 GLuint shipTextures[3];
+int selectedShip = 0;
 
 class Global {
 public:
@@ -169,7 +170,6 @@ public:
 	Ship ship;
 	Asteroid *ahead;
 	Bullet *barr;
-	int selectedShip;
     int showStardust;
 	int nasteroids;
 	int nbullets;
@@ -499,7 +499,6 @@ int main()
 		//render();
 		renderMenu();
         x11.swapBuffers();
-		printf("AFTER renderMenu() -> Game Mode: %d\n", g.gameMode);
 	}
 	cleanup_fonts();
 	logClose();
@@ -1301,7 +1300,6 @@ void renderMenu() {
     }
 
 	if (g.gameMode == Game::MAIN_MENU) {
-        printf("✅ MAIN MENU should be rendering!\n");
         drawMenu();
         handleMainMenuInput();
         return;
@@ -1492,7 +1490,7 @@ void render()
 	// glVertex2f( 12.0f, -10.0f);
 	// glEnd();
 
-	drawUFO(g.ship.pos[0], g.ship.pos[1], shipTextures[g.selectedShip]);
+	drawUFO(g.ship.pos[0], g.ship.pos[1], shipTextures[selectedShip]);
 
 
 	glEnable(GL_TEXTURE_2D);

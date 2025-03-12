@@ -28,19 +28,16 @@ public:
     };
     GameMode gameMode;
     bool inMenu;
-    int selectedShip;
 };
 
-// Now declare extern so they reference the actual instances in space.cpp
 extern Global gl;
 extern Game g;
 extern void setGameMode(Game::GameMode mode);
 extern GLuint shipTextures[3];
+extern int selectedShip;
 extern void drawUFO(float x, float y, GLuint texture);
     
 using namespace std;
-
-int selectedShip = 0;
 
 void show_mgarris(Rect *r)
 {
@@ -124,8 +121,8 @@ void handle_ship_selection_input() {
     }
 
     if (gl.keys[XK_Return]) {
-            g.selectedShip = selectedShip + 1; 
-            g.inMenu = true;  
+            selectedShip = selectedShip; 
+            g.inMenu = true;
             setGameMode(Game::MAIN_MENU);
     }
 }
