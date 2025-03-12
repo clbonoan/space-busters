@@ -69,6 +69,7 @@ extern void timeCopy(struct timespec *dest, struct timespec *source);
 //-----------------------------------------------------------------------------
 
 Vec mousePos = {0, 0, 0};
+GLuint shipTextures[3];
 
 class Global {
 public:
@@ -579,6 +580,26 @@ void init_opengl(void)
 	//Do this to allow fonts
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
+
+	
+    const char *shipFiles[3] = {
+        "./images/ufo-B.png",
+        "./images/ufo-G.png",
+        "./images/ufo-R.png"
+    };
+	glGenTextures(3, shipTextures);
+	for (int i = 0; i < 3; i++) {
+		glBindTexture(GL_TEXTURE_2D, shipTextures[i]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		
+		Image img(shipFiles[i]);
+		unsigned char *data = buildAlphaData(&img);  // Adding transparency
+	
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0,
+					 GL_RGBA, GL_UNSIGNED_BYTE, data);
+		free(data);
+	}
 
 	glGenTextures(1, &g.ufoTexture);
     glBindTexture(GL_TEXTURE_2D, g.ufoTexture);
@@ -1230,6 +1251,7 @@ void drawMenu() {
     r.bot = gl.yres / 2;
     r.left = gl.xres / 2 - 100;
     r.center = 0;
+	glEnable(GL_TEXTURE_2D);
     
     // title
     ggprint8b(&r, 32, 0x00ffff00, "SPACE BUSTERS");
@@ -1368,14 +1390,14 @@ void handlePauseMenuInput() {
     }
 }
 
-void drawUFO(float x, float y) {
-	float w = 32.0f, h = 32.0f;
+void drawUFO(float x, float y, GLuint texture) {
+    float w = 32.0f, h = 32.0f;
 
     glPushMatrix();
     glTranslatef(x, y, 0);
-    
+
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, g.ufoTexture);
+    glBindTexture(GL_TEXTURE_2D, texture);  // Bind the passed texture
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0.1f);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1392,11 +1414,11 @@ void drawUFO(float x, float y) {
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glPopMatrix();
-	glEnable(GL_TEXTURE_2D);
 }
 
 void cleanupTextures() {
     glDeleteTextures(1, &g.ufoTexture);
+	glDeleteTextures(3, shipTextures);
 }
 
 void render()
@@ -1470,7 +1492,7 @@ void render()
 	// glVertex2f( 12.0f, -10.0f);
 	// glEnd();
 
-	drawUFO(g.ship.pos[0], g.ship.pos[1]);
+	drawUFO(g.ship.pos[0], g.ship.pos[1], shipTextures[g.selectedShip]);
 
 
 	glEnable(GL_TEXTURE_2D);
