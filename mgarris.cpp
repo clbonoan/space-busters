@@ -15,19 +15,19 @@ class Global {
     public:
         int xres, yres;
         char keys[65536];
-    };
+};
 
 class Game {
-public:
-    enum GameMode {
-        MAIN_MENU,
-        ENDLESS_MODE,
-        BOSS_MODE,
-        SHIP_SELECTION,
-        PAUSE_MENU
-    };
-    GameMode gameMode;
-    bool inMenu;
+    public:
+        enum GameMode {
+            MAIN_MENU,
+            ENDLESS_MODE,
+            BOSS_MODE,
+            SHIP_SELECTION,
+            PAUSE_MENU
+        };
+        GameMode gameMode;
+        bool inMenu;
 };
 
 extern Global gl;
@@ -36,7 +36,7 @@ extern void setGameMode(Game::GameMode mode);
 extern GLuint shipTextures[3];
 extern int selectedShip;
 extern void drawUFO(float x, float y, GLuint texture);
-    
+
 using namespace std;
 
 void show_mgarris(Rect *r)
@@ -55,7 +55,7 @@ void render_ship_selection() {
     ggprint8b(&r, 24, 0x00ffffff, "Select Your Ship");
 
 
-    
+
     float centerX = gl.xres / 2;
     float centerY = gl.yres / 2;
     float size = 80.0f;
@@ -121,8 +121,8 @@ void handle_ship_selection_input() {
     }
 
     if (gl.keys[XK_Return]) {
-            selectedShip = selectedShip; 
-            g.inMenu = true;
-            setGameMode(Game::MAIN_MENU);
+        selectedShip = selectedShip; 
+        g.inMenu = true;
+        setGameMode(Game::MAIN_MENU);
     }
 }
