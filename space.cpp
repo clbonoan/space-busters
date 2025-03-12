@@ -1452,7 +1452,6 @@ void render()
 {
 Rect r;
 glClear(GL_COLOR_BUFFER_BIT);
-
 // Draw background
 if (gl.background) {
     glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
