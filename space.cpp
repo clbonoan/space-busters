@@ -23,7 +23,6 @@
 #include <X11/keysym.h>
 #include "log.h"
 #include "fonts.h"
-#include "texture.h"
 
 //texture variables
 //GLuint ufoTexture;
@@ -67,194 +66,6 @@ extern double timeSpan;
 extern double timeDiff(struct timespec *start, struct timespec *end);
 extern void timeCopy(struct timespec *dest, struct timespec *source);
 //-----------------------------------------------------------------------------
-
-class Global {
-public:
-	int xres, yres;
-	char keys[65536];
-	int mouse_cursor_on;
-	int credits;
-    int instructions;
-    Global() {
-		//xres = 640;
-		//yres = 480;
-		xres = 900;
-        yres = 760;
-        memset(keys, 0, 65536);
-		// mouse value 1 = true = mouse is a regular mouse.
-		mouse_cursor_on = 1;
-        credits = 0;
-        instructions = 0;
-	}
-} gl;
-
-class Ship {
-public:
-	Vec pos;
-	Vec dir;
-	Vec vel;
-	Vec acc;
-	float angle;
-	float color[3];
-    float health;   // 100 = full health, 0 = empty
-public:
-	Ship() {
-		pos[0] = (Flt)(gl.xres/2);
-		pos[1] = (Flt)(gl.yres/2);
-		pos[2] = 0.0f;
-		VecZero(dir);
-		VecZero(vel);
-		VecZero(acc);
-		angle = 0.0;
-		color[0] = color[1] = color[2] = 1.0;
-        health = 1.0; 
-	}
-
-    void takeDamage(int damage) {
-        health -= damage;
-        if (health < 0)
-            health = 0;
-    }
-
-    void heal(int amount) {
-        health += amount;
-        if (health > 1.0)
-            health = 1.0;
-    }
-};
-
-class Bullet {
-public:
-	Vec pos;
-	Vec vel;
-	float color[3];
-	struct timespec time;
-public:
-	Bullet() { }
-};
-
-class Asteroid {
-public:
-	Vec pos;
-	Vec vel;
-	int nverts;
-	Flt radius;
-	Vec vert[8];
-	float angle;
-	float rotate;
-	float color[3];
-	struct Asteroid *prev;
-	struct Asteroid *next;
-public:
-	Asteroid() {
-		prev = NULL;
-		next = NULL;
-	}
-};
-
-class Game {
-public:
-    //==============================================
-    //track score
-    //==============================================
-    //
-    int score;
-    //
-    //==============================================
-    GLuint stardustTexture;
-    GLuint ufoTexture;
-	Ship ship;
-	Asteroid *ahead;
-	Bullet *barr;
-    int showStardust;
-	int nasteroids;
-	int nbullets;
-    int nenemies;   // number of enemies for endless mode
-	struct timespec bulletTimer;
-	struct timespec mouseThrustTimer;
-	bool mouseThrustOn;
-    // -----------------------------------
-    // add menu related variables
-    // -----------------------------------
-    enum GameMode {
-        MAIN_MENU,
-        ENDLESS_MODE,
-        BOSS_MODE,
-        PAUSE_MENU
-    };
-    GameMode gameMode;
-    bool inMenu;
-    int menuSelection;
-    bool isPaused;
-    bool prevKeys[65536];
-public:
-	Game() {
-        showStardust = 0;
-		ahead = NULL;
-		barr = new Bullet[MAX_BULLETS];
-		nasteroids = 0;
-		nbullets = 0;
-        nenemies = 0;
-		mouseThrustOn = false;
-        // -------------------------------------------------
-        // initialize menu variables
-        // ------------------------------------------------
-        inMenu = true;  // start in the menu
-        gameMode = MAIN_MENU;
-        menuSelection = 0;  // default selection is Endless mode
-        isPaused = false;
-        //==============================================
-        //track score
-        //==============================================
-        //
-        score = 0;
-        //
-        //==============================================
-        memset(prevKeys, 0, sizeof(prevKeys));
-		//build 2 asteroids...
-		for (int j=0; j<5; j++) {
-			Asteroid *a = new Asteroid;
-			a->nverts = 8;
-			a->radius = rnd()*80.0 + 40.0;
-			//Flt r2 = a->radius / 2.0;
-			Flt angle = 0.0f;
-			Flt inc = (PI * 2.0) / (Flt)a->nverts;
-			for (int i=0; i<a->nverts; i++) {
-	
-                a->vert[i][0] = sin(angle) * a->radius;
-                a->vert[i][1] = cos(angle) * a->radius;
-                angle += inc;
-            
-                
-                
-                //		a->vert[i][0] = sin(angle) * (r2 + rnd() * a->radius);
-		//		a->vert[i][1] = cos(angle) * (r2 + rnd() * a->radius);
-		//		angle += inc;
-			}
-			a->pos[0] = (Flt)(rand() % gl.xres);
-			a->pos[1] = (Flt)(rand() % gl.yres);
-			a->pos[2] = 0.0f;
-			a->angle = 0.0;
-			a->rotate = rnd() * 4.0 - 2.0;
-			a->color[0] = 0.8;
-			a->color[1] = 0.8;
-			a->color[2] = 0.7;
-			a->vel[0] = (Flt)(rnd()*2.0-1.0);
-			a->vel[1] = (Flt)(rnd()*2.0-1.0);
-			//std::cout << "asteroid" << std::endl;
-			//add to front of linked list
-			a->next = ahead;
-			if (ahead != NULL)
-				ahead->prev = a;
-			ahead = a;
-			++nasteroids;
-		}
-		clock_gettime(CLOCK_REALTIME, &bulletTimer);
-	}
-	~Game() {
-		delete [] barr;
-    }
-} g;
 
 class Image {
 public:
@@ -309,13 +120,210 @@ public:
             unlink(ppmname);
     }   
 };
-Image img[3] = { 
-"./images/stardust-health.png",
+
+Image img[4] = { 
+"./images/title1.png",
+"./images/background.png",
 "./images/ufo.png",
-"./images/title.png"
+"./images/stardust-health.png"
 };
 
 
+class Global {
+public:
+	int xres, yres;
+    GLuint titleTexture;
+	GLuint backgroundTexture;
+    char keys[65536];
+	int mouse_cursor_on;
+	int credits;
+    int instructions;
+    int title;
+    int background;
+    Global() {
+		//xres = 640;
+		//yres = 480;
+		xres = 900;
+        yres = 760;
+        memset(keys, 0, 65536);
+		// mouse value 1 = true = mouse is a regular mouse.
+		mouse_cursor_on = 1;
+        credits = 0;
+        instructions = 0;
+        title = 1;
+        background = 1;
+	}
+} gl;
+
+class Ship {
+public:
+	Vec pos;
+	Vec dir;
+	Vec vel;
+	Vec acc;
+	float angle;
+	float color[3];
+    float health;   // 100 = full health, 0 = empty
+public:
+	Ship() {
+		pos[0] = (Flt)(gl.xres/2);
+		pos[1] = (Flt)(gl.yres/2);
+		pos[2] = 0.0f;
+		VecZero(dir);
+		VecZero(vel);
+		VecZero(acc);
+		angle = 0.0;
+		color[0] = color[1] = color[2] = 1.0;
+        health = 1.0f; 
+	}
+
+    void takeDamage(int damage) {
+        health -= damage;
+        if (health < 0.0f)
+            health = 0.0f;
+    }
+
+    void heal(int amount) {
+        health += amount;
+        if (health > 1.0f)
+            health = 1.0f;
+    }
+};
+
+class Bullet {
+public:
+	Vec pos;
+	Vec vel;
+	float color[3];
+	struct timespec time;
+public:
+	Bullet() { }
+};
+
+class Asteroid {
+public:
+	Vec pos;
+	Vec vel;
+	int nverts;
+	Flt radius;
+	Vec vert[8];
+	float angle;
+	float rotate;
+	float color[3];
+	struct Asteroid *prev;
+	struct Asteroid *next;
+public:
+	Asteroid() {
+		prev = NULL;
+		next = NULL;
+	}
+};
+
+class Game {
+public:
+    //==============================================
+    //track score
+    //==============================================
+    //
+    int score;
+    //
+    //==============================================
+	Ship ship;
+    GLuint ufoTexture;
+    GLuint stardustTexture;
+	Asteroid *ahead;
+	Bullet *barr;
+    int ufo;
+    int showStardust;
+	int nasteroids;
+	int nbullets;
+    int nenemies;   // number of enemies for endless mode
+	struct timespec bulletTimer;
+	struct timespec mouseThrustTimer;
+	bool mouseThrustOn;
+    // -----------------------------------
+    // add menu related variables
+    // -----------------------------------
+    enum GameMode {
+        MAIN_MENU,
+        ENDLESS_MODE,
+        BOSS_MODE,
+        PAUSE_MENU
+    };
+    GameMode gameMode;
+    bool inMenu;
+    int menuSelection;
+    bool isPaused;
+    bool prevKeys[65536];
+public:
+	Game() {
+        ufo = 1;
+        showStardust = 0;
+		ahead = NULL;
+		barr = new Bullet[MAX_BULLETS];
+		nasteroids = 0;
+		nbullets = 0;
+        nenemies = 0;
+		mouseThrustOn = false;
+        // -------------------------------------------------
+        // initialize menu variables
+        // ------------------------------------------------
+        inMenu = true;  // start in the menu
+        gameMode = MAIN_MENU;
+        menuSelection = 0;  // default selection is Endless mode
+        isPaused = false;
+        //==============================================
+        //track score
+        //==============================================
+        //
+        score = 0;
+        //
+        //==============================================
+        memset(prevKeys, 0, sizeof(prevKeys));
+		//build 2 asteroids...
+		for (int j=0; j<5; j++) {
+			Asteroid *a = new Asteroid;
+			a->nverts = 8;
+			a->radius = rnd()*80.0 + 40.0;
+			//Flt r2 = a->radius / 2.0;
+			Flt angle = 0.0f;
+			Flt inc = (PI * 2.0) / (Flt)a->nverts;
+			for (int i=0; i<a->nverts; i++) {
+	
+                a->vert[i][0] = sin(angle) * a->radius;
+                a->vert[i][1] = cos(angle) * a->radius;
+                angle += inc;
+            
+                
+                
+        //		a->vert[i][0] = sin(angle) * (r2 + rnd() * a->radius);
+		//		a->vert[i][1] = cos(angle) * (r2 + rnd() * a->radius);
+		//		angle += inc;
+			}
+			a->pos[0] = (Flt)(rand() % gl.xres);
+			a->pos[1] = (Flt)(rand() % gl.yres);
+			a->pos[2] = 0.0f;
+			a->angle = 0.0;
+			a->rotate = rnd() * 4.0 - 2.0;
+			a->color[0] = 0.8;
+			a->color[1] = 0.8;
+			a->color[2] = 0.7;
+			a->vel[0] = (Flt)(rnd()*2.0-1.0);
+			a->vel[1] = (Flt)(rnd()*2.0-1.0);
+			//std::cout << "asteroid" << std::endl;
+			//add to front of linked list
+			a->next = ahead;
+			if (ahead != NULL)
+				ahead->prev = a;
+			ahead = a;
+			++nasteroids;
+		}
+		clock_gettime(CLOCK_REALTIME, &bulletTimer);
+	}
+	~Game() {
+		delete [] barr;
+    }
+} g;
 //X Windows variables
 class X11_wrapper {
 private:
@@ -558,10 +566,44 @@ void init_opengl(void)
 	glDisable(GL_CULL_FACE);
 	//
 	//Clear the screen to black
-	glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
-	//Do this to allow fonts
+	//glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
+    //Do this to allow fonts
 	glEnable(GL_TEXTURE_2D);
 	initialize_fonts();
+    //load the images file into a png structure
+    glGenTextures(1, &gl.titleTexture);
+    glGenTextures(1, &gl.backgroundTexture);
+    glGenTextures(1, &g.ufoTexture);
+    glGenTextures(1, &g.stardustTexture);
+    //----------------------------------------------------
+    //title
+    //
+    //int w = img[0].width;
+    //int h = img[0].height;
+    
+    glBindTexture(GL_TEXTURE_2D, gl.titleTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, img[0].width, img[0].height, 0,
+            GL_RGB, GL_UNSIGNED_BYTE, img[0].data);
+    //--------------------------------------------------------
+    //game background
+    //
+    glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, img[1].width, img[1].height, 0,
+            GL_RGB, GL_UNSIGNED_BYTE, img[1].data);
+    //--------------------------------------------------------
+    //ufo
+    //
+    /*
+    glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, img[2].width, img[2].height, 0,
+            GL_RGB, GL_UNSIGNED_BYTE, img[2].data);
+    */
 }
 
 
@@ -938,7 +980,7 @@ void physics()
             a->pos[0] = a->radius;     
             a->vel[0] = -a->vel[0];    
         } else if (a->pos[0] + a->radius > gl.xres) {
-        a->pos[0] = gl.xres - a->radius; 
+        a->pos[0] = gl.xres - a->radius;
         a->vel[0] = -a->vel[0];
     }
 
@@ -1106,12 +1148,35 @@ void updateGame() {
 void drawMenu() {
     Rect r;
     glClear(GL_COLOR_BUFFER_BIT);
+    if (gl.title) {
+        glBindTexture(GL_TEXTURE_2D, gl.titleTexture);
+        //width and height for title
+        int titleWidth = 692;
+        int titleHeight = 47;
+        int titlexStart = (gl.xres - titleWidth) / 2;
+        int titlexEnd = titlexStart + titleWidth;
+        int titleyStart = gl.yres - titleHeight - 300;
+        int titleyEnd = gl.yres - 300;
+        /*glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+            glTexCoord2f(0.0f, 0.0f); glVertex2i(0, gl.yres);
+            glTexCoord2f(1.0f, 0.0f); glVertex2i(gl.xres, gl.yres);
+            glTexCoord2f(1.0f, 1.0f); glVertex2i(gl.xres, 0);
+        glEnd();*/
+        glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 1.0f); glVertex2i(titlexStart, titleyStart);
+            glTexCoord2f(0.0f, 0.0f); glVertex2i(titlexStart, titleyEnd);
+            glTexCoord2f(1.0f, 0.0f); glVertex2i(titlexEnd, titleyEnd);
+            glTexCoord2f(1.0f, 1.0f); glVertex2i(titlexEnd, titleyStart);
+        glEnd();
+    }
+
+    //glClear(GL_COLOR_BUFFER_BIT);
     r.bot = gl.yres / 2;
     r.left = gl.xres / 2 - 100;
     r.center = 0;
     
     // title
-    ggprint8b(&r, 32, 0x00ffff00, "SPACE BUSTERS");
     ggprint8b(&r, 24, 0x00ffff00, "Game Menu");
 
     // options
@@ -1236,7 +1301,16 @@ void render()
 	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
 	//
-	r.bot = gl.yres - 20;
+    if (gl.background) {
+        glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
+        glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);  
+            glTexCoord2f(0.0f, 0.0f); glVertex2i(0, gl.yres);
+            glTexCoord2f(1.0f, 0.0f); glVertex2i(gl.xres, gl.yres);
+            glTexCoord2f(1.0f, 1.0f); glVertex2i(gl.xres, 0);  
+        glEnd();
+    }   
+    r.bot = gl.yres - 20;
 	r.left = 10;
 	r.center = 0;
 	//ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
@@ -1284,7 +1358,7 @@ void render()
     }
 
 	//-------------------------------------------------------------------------
-	//Draw the ship
+    //Draw the ship
 	glColor3fv(g.ship.color);
 	glPushMatrix();
 	glTranslatef(g.ship.pos[0], g.ship.pos[1], g.ship.pos[2]);
