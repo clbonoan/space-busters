@@ -168,6 +168,7 @@ public:
 	Ship ship;
 	Asteroid *ahead;
 	Bullet *barr;
+	int selectedShip;
     int showStardust;
 	int nasteroids;
 	int nbullets;
@@ -182,6 +183,7 @@ public:
         MAIN_MENU,
         ENDLESS_MODE,
         BOSS_MODE,
+		SHIP_SELECTION,
         PAUSE_MENU
     };
     GameMode gameMode;
@@ -461,6 +463,9 @@ void handlePauseMenuInput();
 void drawPauseMenu();
 void cleanupTextures();
 
+extern void render_ship_selection();
+extern void handle_ship_selection_input();
+
 
 //==========================================================================
 // M A I N
@@ -493,6 +498,7 @@ int main()
 		//render();
 		renderMenu();
         x11.swapBuffers();
+		printf("AFTER renderMenu() -> Game Mode: %d\n", g.gameMode);
 	}
 	cleanup_fonts();
 	logClose();
@@ -813,6 +819,10 @@ void deleteAsteroid(Game *g, Asteroid *node)
 	}
 	delete node;
 	node = NULL;
+}
+
+void setGameMode(Game::GameMode mode) {
+    g.gameMode = mode;
 }
 
 void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
@@ -1228,7 +1238,8 @@ void drawMenu() {
     // options
     ggprint8b(&r, 16, (g.menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Endless Mode");
     ggprint8b(&r, 16, (g.menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, "Boss Mode");
-    ggprint8b(&r, 16, (g.menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Exit");
+	ggprint8b(&r, 16, (g.menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Ship Selection");
+    ggprint8b(&r, 16, (g.menuSelection == 3) ? 0x00ff0000 : 0x00ffffff, "Exit");
 
 }
 
@@ -1258,8 +1269,7 @@ void renderMenu() {
         drawMenu();
         handleMainMenuInput();
         return;
-    } 
-    
+    }
     if (g.isPaused) {
         // pause menu logic
         //extern void drawPauseMenu();
@@ -1268,12 +1278,25 @@ void renderMenu() {
         return;
     }
 
-    if (g.gameMode == Game::ENDLESS_MODE) {
+	if (g.gameMode == Game::MAIN_MENU) {
+        printf("✅ MAIN MENU should be rendering!\n");
+        drawMenu();
+        handleMainMenuInput();
+        return;
+    } else if (g.gameMode == Game::ENDLESS_MODE) {
         // add calls to functions that spawn certain enemies, etc..
         render();
     } else if (g.gameMode == Game::BOSS_MODE) {
         // add calls to functions that spawns boss enemy, etc..
         render();        
+    } else if (g.gameMode == Game::SHIP_SELECTION) { 
+		static bool firstTime = true;
+        if (firstTime) {
+            gl.keys[XK_Return] = 0;
+            firstTime = false;
+        }
+        render_ship_selection();
+        handle_ship_selection_input();
     }
 }
 
@@ -1303,9 +1326,12 @@ void handleMainMenuInput() {
             case 1: // boss mode
                 g.gameMode = Game::BOSS_MODE;
                 break;
-            case 2: // exit
-                exit(0);
-                break;
+			case 2: // ship selection
+				g.gameMode = Game::SHIP_SELECTION;
+				break;
+			case 3: // exit
+				exit(0);
+				break;
         }
     }
 }
