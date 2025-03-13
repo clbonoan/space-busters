@@ -289,10 +289,9 @@ class Image {
         }   
 };
 
-Image img[4] = { 
-    "./images/title1.png",
+Image img[3] = { 
+    "./images/title.png",
     "./images/background.png",
-    "./images/ufo.png",
     "./images/stardust-health.png"
 };
 
@@ -553,7 +552,8 @@ glDisable(GL_FOG);
 glDisable(GL_CULL_FACE);
 
 //Clear the screen to black
-glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
+//glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
+glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 //Fonts
 glEnable(GL_TEXTURE_2D);
@@ -582,7 +582,7 @@ for (int i = 0; i < 3; i++) {
 // Load other textures
 glGenTextures(1, &gl.titleTexture);
 glGenTextures(1, &gl.backgroundTexture);
-glGenTextures(1, &g.ufoTexture);
+//glGenTextures(1, &gl.ufoTexture);
 glGenTextures(1, &g.stardustTexture);
 
 // Load title texture
@@ -600,20 +600,20 @@ glTexImage2D(GL_TEXTURE_2D, 0, 3, img[1].width, img[1].height, 0,
              GL_RGB, GL_UNSIGNED_BYTE, img[1].data);
 
 // Load UFO texture
-glBindTexture(GL_TEXTURE_2D, g.ufoTexture);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-unsigned char *ufoData = buildAlphaData(&img[2]);  // Adding transparency
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img[2].width, img[2].height, 0,
-             GL_RGBA, GL_UNSIGNED_BYTE, ufoData);
-free(ufoData);
+//glBindTexture(GL_TEXTURE_2D, g.ufoTexture);
+//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//unsigned char *ufoData = buildAlphaData(&img[2]);  // Adding transparency
+//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img[2].width, img[2].height, 0,
+  //           GL_RGBA, GL_UNSIGNED_BYTE, ufoData);
+//free(ufoData);
 
 // Load Stardust texture
 glBindTexture(GL_TEXTURE_2D, g.stardustTexture);
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-glTexImage2D(GL_TEXTURE_2D, 0, 3, img[3].width, img[3].height, 0,
-             GL_RGB, GL_UNSIGNED_BYTE, img[3].data);
+glTexImage2D(GL_TEXTURE_2D, 0, 3, img[2].width, img[2].height, 0,
+             GL_RGB, GL_UNSIGNED_BYTE, img[2].data);
 }
 
 
@@ -1355,9 +1355,9 @@ void renderMenu() {
 void handleMainMenuInput() {
     // handle menu navigation with keyboard input
     if (gl.keys[XK_Up] && !g.prevKeys[XK_Up]) 
-        g.menuSelection = (g.menuSelection == 0) ? 2 : g.menuSelection - 1; 
+        g.menuSelection = (g.menuSelection == 0) ? 3 : g.menuSelection - 1; 
     if (gl.keys[XK_Down] && !g.prevKeys[XK_Down])
-        g.menuSelection = (g.menuSelection == 2) ? 0 : g.menuSelection + 1;
+        g.menuSelection = (g.menuSelection == 3) ? 3 : g.menuSelection + 1;
     //g.menuSelection ^= 1;   //XOR to toggle between 0 and 1
 
     // update prevKeys; prevents multiple presses per key press
