@@ -1026,22 +1026,35 @@ void physics()
         //move the bullet
         b->pos[0] += b->vel[0];
         b->pos[1] += b->vel[1];
-        // bouncy bullets
+        
+        // bounce the bullets/ kill the bullet
         if (b->pos[0] < 0.0f) {
-            b->pos[0] = 0.0f;
-            b->vel[0] = -b->vel[0];
+            memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
+            g.nbullets--;
+            continue;
+            //b->pos[0] = 0.0f;
+            //b->vel[0] = -b->vel[0];
         } else if (b->pos[0] > (float)gl.xres) {
-            b->pos[0] = gl.xres;
-            b->vel[0] = -b->vel[0];
+            memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
+            g.nbullets--;
+            continue;
+            //b->pos[0] = gl.xres;
+            //b->vel[0] = -b->vel[0];
         }
 
-        // bullets bounce off the edges
+        // bullets bounce off the edges / kill the bullet
         if (b->pos[1] < 0.0f) {
-            b->pos[1] = 0.0f;
-            b->vel[1] = -b->vel[1];
+            memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
+            g.nbullets--;
+            continue;
+            //b->pos[1] = 0.0f;
+            //b->vel[1] = -b->vel[1];
         } else if (b->pos[1] > (float)gl.yres) {
-            b->pos[1] = gl.yres;
-            b->vel[1] = -b->vel[1];
+            memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
+            g.nbullets--;
+            continue;
+            //b->pos[1] = gl.yres;
+            //b->vel[1] = -b->vel[1];
         }
         ++i;
     }
@@ -1079,7 +1092,7 @@ void physics()
         a->pos[0] += a->vel[0];
         a->pos[1] += a->vel[1];
 
-        // Bounce off the left/right boundaries
+        // bounce off the left right edges
         if (a->pos[0] - a->radius < 0.0f) {
             a->pos[0] = a->radius;     
             a->vel[0] = -a->vel[0];    
