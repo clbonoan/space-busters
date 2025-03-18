@@ -7,7 +7,6 @@
 //
 //------------------------------------------------------------
 //changes made:
-//
 //------------------------------------------------------------
 #include <iostream>
 #include <cstdlib>
@@ -27,7 +26,6 @@
 //texture variables
 //GLuint ufoTexture;
 //int ufoWidth, ufoHeight;
-
 
 using namespace std; 
 
@@ -599,15 +597,6 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 glTexImage2D(GL_TEXTURE_2D, 0, 3, img[1].width, img[1].height, 0,
              GL_RGB, GL_UNSIGNED_BYTE, img[1].data);
 
-// Load UFO texture
-//glBindTexture(GL_TEXTURE_2D, g.ufoTexture);
-//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//unsigned char *ufoData = buildAlphaData(&img[2]);  // Adding transparency
-//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img[2].width, img[2].height, 0,
-  //           GL_RGBA, GL_UNSIGNED_BYTE, ufoData);
-//free(ufoData);
-
 // Load Stardust texture
 glBindTexture(GL_TEXTURE_2D, g.stardustTexture);
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1000,13 +989,6 @@ void physics()
         }
     }
 
-
-
-
-
-
-
-
     //Update bullet positions
     struct timespec bt;
     clock_gettime(CLOCK_REALTIME, &bt);
@@ -1362,7 +1344,7 @@ void renderMenu() {
     }
 }
 
-//---------------------------------------------------------------
+//--------------------------------------------------------------
 //added function to handle main menu choices
 //--------------------------------------------------------------
 void handleMainMenuInput() {

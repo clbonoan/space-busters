@@ -74,7 +74,7 @@ void drawHealthBar(float health)
     ggprint8b(&r, 16, 0x00ffff00, "HEALTH");
 
     //debug
-    printf("health: %f\n", g.ship.health);
+    //printf("health: %f\n", g.ship.health);
     
     // draws red health background bar
     glColor3f(1.0f, 0.0f, 0.0f);    
