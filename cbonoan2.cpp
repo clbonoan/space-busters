@@ -2,40 +2,17 @@
 #include <iostream>
 #include <fstream>
 #include "fonts.h"
+#include "cbonoan.h"
 #include <GL/gl.h>
 #include <GL/glx.h>
 #include <X11/Xlib.h>
-
-class Global {
-public:
-    int xres, yres;
-};
-
-class Ship {
-public:
-    float health;
-
-    Ship() {
-        health = 1.0f;
-    }
-};
-
-class Game {
-public:
-    Ship ship;
-//    GLuint stardustTexture;
-//    GLuint ufoTexture;
-//    int showStardust;
-};
+#include <X11/keysym.h>
+#include <cstring>
 
 extern Global gl;
 extern Game g;
 
 using namespace std;
-
-//ufo variables
-//GLuint ufoTexture;
-//int ufoWidth, ufoHeight;
 
 void show_christine(Rect *r)
 {
@@ -54,7 +31,7 @@ void show_instructions(Rect *r)
 // --------------------------------------------------------------------
 // added health bar function
 // --------------------------------------------------------------------
-void drawHealthBar(float health)
+void drawHealthBar(int xres, float health)
 {
     if (health > 1.0f)
         health = 1.0f;
@@ -64,7 +41,7 @@ void drawHealthBar(float health)
     // position for health bar at bottom right corner
     float healthBarWidth = 200.0f;
     float healthBarHeight = 15.0f;
-    float barX = gl.xres - healthBarWidth - 20;     // shows 10px from the right
+    float barX = xres - healthBarWidth - 20;     // shows 10px from the right
     float barY = 10;    // shows 10px from the bottom
 
     Rect r;
@@ -89,8 +66,8 @@ void drawHealthBar(float health)
     glColor3f(0.0f, 0.0f, 1.0f);
     glBegin(GL_QUADS);
     glVertex2f(barX, barY);
-    glVertex2f(barX + (healthBarWidth * g.ship.health), barY);
-    glVertex2f(barX + (healthBarWidth * g.ship.health), barY + healthBarHeight);
+    glVertex2f(barX + (healthBarWidth * health), barY);
+    glVertex2f(barX + (healthBarWidth * health), barY + healthBarHeight);
     glVertex2f(barX, barY + healthBarHeight);
     glEnd();
 
@@ -106,4 +83,109 @@ void drawHealthBar(float health)
     }
 }
 
+// -------------------------------------------------------------------
+// add menu screen to choose endless mode or boss mode before starting
+// -------------------------------------------------------------------
+void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelection) 
+{
+    Rect r;
+    glClear(GL_COLOR_BUFFER_BIT);
+    if (title) {
+        glBindTexture(GL_TEXTURE_2D, titleTexture);
+        //width and height for title
+        int titleWidth = 692;
+        int titleHeight = 47;
+        int titlexStart = (xres - titleWidth) / 2;
+        int titlexEnd = titlexStart + titleWidth;
+        int titleyStart = yres - titleHeight - 300;
+        int titleyEnd = yres - 300;
+        /*glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+            glTexCoord2f(0.0f, 0.0f); glVertex2i(0, gl.yres);
+            glTexCoord2f(1.0f, 0.0f); glVertex2i(gl.xres, gl.yres);
+            glTexCoord2f(1.0f, 1.0f); glVertex2i(gl.xres, 0);
+        glEnd();*/
+        glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 1.0f); glVertex2i(titlexStart, titleyStart);
+            glTexCoord2f(0.0f, 0.0f); glVertex2i(titlexStart, titleyEnd);
+            glTexCoord2f(1.0f, 0.0f); glVertex2i(titlexEnd, titleyEnd);
+            glTexCoord2f(1.0f, 1.0f); glVertex2i(titlexEnd, titleyStart);
+        glEnd();
+    }
 
+    //glClear(GL_COLOR_BUFFER_BIT);
+    r.bot = yres / 2;
+    r.left = xres / 2 - 100;
+    r.center = 0;
+    glEnable(GL_TEXTURE_2D);
+
+    // title
+    ggprint8b(&r, 24, 0x00ffff00, "Game Menu");
+
+    // options
+    ggprint8b(&r, 16, (menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Endless Mode");
+    ggprint8b(&r, 16, (menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, "Boss Mode");
+    ggprint8b(&r, 16, (menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Ship Selection");
+    ggprint8b(&r, 16, (menuSelection == 3) ? 0x00ff0000 : 0x00ffffff, "Exit");
+
+}
+
+//-----------------------------------------------------------------
+// add pause menu
+//-----------------------------------------------------------------
+void drawPauseMenu(int xres, int yres, int menuSelection) 
+{
+    // draw "resume", "main menu", and "exit" options
+    Rect r;
+    r.bot = yres / 2;
+    r.left = xres / 2 - 100;
+    r.center = 0;
+
+    ggprint8b(&r, 24, 0x00ffff00, "Pause Menu");
+    ggprint8b(&r, 16, (menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Resume");
+    ggprint8b(&r, 16, (menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, "Return to Main Menu");
+    ggprint8b(&r, 16, (menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Exit");
+
+}
+
+/*
+//--------------------------------------------------------------
+//added function to handle main menu choices
+//--------------------------------------------------------------
+void handleMainMenuInput(char *keys, int menuSelection, bool *prevKeys, 
+        GameMode &gameMode, bool &inMenu) {
+    // handle menu navigation with keyboard input
+    if (keys[XK_Up] && !prevKeys[XK_Up])
+        menuSelection = (menuSelection == 0) ? 3 : menuSelection - 1;
+    if (keys[XK_Down] && !prevKeys[XK_Down])
+        menuSelection = (menuSelection == 3) ? 3 : menuSelection + 1;
+    //g.menuSelection ^= 1;   //XOR to toggle between 0 and 1
+
+    // update prevKeys; prevents multiple presses per key press
+    memcpy(prevKeys, keys, sizeof(keys));
+
+    // confirm selection with Enter key
+    if (keys[XK_Return]) {
+        inMenu = false;
+
+        // start selected game mode
+        switch (menuSelection) {
+            case 0: // endless mode
+                gameMode = Game::ENDLESS_MODE;
+                //gameMode = static_cast<int>(Game::ENDLESS_MODE);
+                break;
+            case 1: // boss mode
+                //gameMode = static_cast<int>(Game::BOSS_MODE);
+                gameMode = Game::BOSS_MODE;
+                break;
+            case 2: // ship selection
+                //gameMode = static_cast<int>(Game::SHIP_SELECTION);
+                gameMode = Game::SHIP_SELECTION;
+                break;
+            case 3: // exit
+                exit(0);
+                break;
+        }
+    }
+}
+*/
