@@ -220,9 +220,12 @@ class Game {
                 a->pos[2] = 0.0f;
                 a->angle = 0.0;
                 a->rotate = rnd() * 4.0 - 2.0;
-                a->color[0] = 0.8;
-                a->color[1] = 0.8;
-                a->color[2] = 0.7;
+                //a->color[0] = 0.8;
+                //a->color[1] = 0.8;
+                //a->color[2] = 0.7;
+                a->color[0] = rnd();
+                a->color[1] = rnd();
+                a->color[2] = rnd(); 
                 a->vel[0] = (Flt)(rnd()*2.0-1.0);
                 a->vel[1] = (Flt)(rnd()*2.0-1.0);
                 a->next = ahead;
@@ -1328,6 +1331,8 @@ void render()
 {
 Rect r;
 glClear(GL_COLOR_BUFFER_BIT);
+glEnable(GL_BLEND);
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 // Draw background
 if (gl.background) {
@@ -1435,60 +1440,7 @@ r.center = 0;
 	}
 	*/
 
-	//-------------------------------------------------------------------------
-	//Draw the asteroids
-	{
-		Asteroid *a = g.ahead;
-		while (a) {
-			//Log("draw asteroid...\n");
-			glColor3fv(a->color);
-			glPushMatrix();
-			glTranslatef(a->pos[0], a->pos[1], a->pos[2]);
-			glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
-			glBegin(GL_LINE_LOOP);
-			//Log("%i verts\n",a->nverts);
-			for (int j=0; j<a->nverts; j++) {
-				glVertex2f(a->vert[j][0], a->vert[j][1]);
-			}
-			glEnd();
-			//glBegin(GL_LINES);
-			//	glVertex2f(0,   0);
-			//	glVertex2f(a->radius, 0);
-			//glEnd();
-			glPopMatrix();
-			glColor3f(1.0f, 0.0f, 0.0f);
-			glBegin(GL_POINTS);
-			glVertex2f(a->pos[0], a->pos[1]);
-			glEnd();
-			a = a->next;
-		}
-	}
-
-	//-------------------------------------------------------------------------
-	//Draw the bullets
-	/*
-	for (int i=0; i<g.nbullets; i++) {
-		Bullet *b = &g.barr[i];
-		//Log("draw bullet...\n");
-		glColor3f(1.0, 1.0, 1.0);
-		glBegin(GL_POINTS);
-		glVertex2f(b->pos[0],      b->pos[1]);
-		glVertex2f(b->pos[0]-1.0f, b->pos[1]);
-		glVertex2f(b->pos[0]+1.0f, b->pos[1]);
-		glVertex2f(b->pos[0],      b->pos[1]-1.0f);
-		glVertex2f(b->pos[0],      b->pos[1]+1.0f);
-		glColor3f(0.8, 0.8, 0.8);
-		glVertex2f(b->pos[0]-1.0f, b->pos[1]-1.0f);
-		glVertex2f(b->pos[0]-1.0f, b->pos[1]+1.0f);
-		glVertex2f(b->pos[0]+1.0f, b->pos[1]-1.0f);
-		glVertex2f(b->pos[0]+1.0f, b->pos[1]+1.0f);
-		glEnd();
-	}
-	*/
-
     drawUFO(g.ship.pos[0], g.ship.pos[1], shipTextures[selectedShip]);
-
-
     glEnable(GL_TEXTURE_2D);
     glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
@@ -1527,6 +1479,15 @@ r.center = 0;
             glPushMatrix();
             glTranslatef(a->pos[0], a->pos[1], a->pos[2]);
             glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
+            //-----------------------------------------------------------
+            //fill asteroids with color
+            glColor4f(a->color[0], a->color[1], a->color[2], 0.2f);
+            glBegin(GL_TRIANGLE_FAN);
+            for (int j=0; j<a->nverts; j++) {
+                glVertex2f(a->vert[j][0], a->vert[j][1]);
+            }
+            glEnd();
+            //----------------------------------------------------------
             glBegin(GL_LINE_LOOP);
             //Log("%i verts\n",a->nverts);
             for (int j=0; j<a->nverts; j++) {
