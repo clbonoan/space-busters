@@ -443,7 +443,12 @@ void cleanupTextures();
 
 extern void render_ship_selection();
 extern void handle_ship_selection_input();
-
+//========================================
+//
+extern void drawIntro();
+extern bool introDone;
+//
+//========================================
 
 //==========================================================================
 // M A I N
@@ -474,8 +479,18 @@ int main()
             physicsCountdown -= physicsRate;
         }
         //render();
+        if (!introDone) {
+            drawIntro();
+        } else {
+            renderMenu();
+        }
+        x11.swapBuffers();
+        
+        /*
+        drawIntro();
         renderMenu();
         x11.swapBuffers();
+        */
     }
     cleanup_fonts();
     logClose();
