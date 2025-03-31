@@ -23,6 +23,8 @@
 #include "log.h"
 #include "fonts.h"
 #include "cbonoan.h"
+#include <pthread.h>
+#include <atomic>
 
 //texture variables
 //GLuint ufoTexture;
@@ -81,6 +83,8 @@ class Global {
         GLuint backgroundTexture;
         int title;
         int background;
+        atomic<float> polledMouseX{0};
+        atomic<float> polledMouseY{0};
         
         Global() {
             xres = 1280;
@@ -442,6 +446,7 @@ void handleMainMenuInput();
 void handlePauseMenuInput();
 void drawPauseMenu();
 void cleanupTextures();
+void* mousePollThread(void* arg);
 
 extern void render_ship_selection();
 extern void handle_ship_selection_input();
@@ -452,6 +457,7 @@ extern void addThrustParticle(float x, float y, float dx, float dy);
 //
 extern void drawIntro();
 extern bool introDone;
+
 //
 //========================================
 
@@ -467,6 +473,8 @@ int main()
     clock_gettime(CLOCK_REALTIME, &timeStart);
     x11.set_mouse_position(200, 200);
     x11.show_mouse_cursor(gl.mouse_cursor_on);
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, mousePollThread, NULL);
     int done=0;
     while (!done) {
         while (x11.getXPending()) {
@@ -497,6 +505,8 @@ int main()
         x11.swapBuffers();
         */
     }
+    pthread_cancel(thread_id);
+    pthread_join(thread_id, NULL);
     cleanup_fonts();
     logClose();
     cleanupTextures();
@@ -926,39 +936,67 @@ void shootBullet() {
     }
 }
 
-void pollMousePosition(Display *dpy, Window win) {
-    Window root_return, child_return;
-    int root_x, root_y;
-    int win_x, win_y;
-    unsigned int mask_return;
+// void pollMousePosition(Display *dpy, Window win) {
+//     Window root_return, child_return;
+//     int root_x, root_y;
+//     int win_x, win_y;
+//     unsigned int mask_return;
 
-    Bool result = XQueryPointer(dpy, win,
-                  &root_return, &child_return,
-                  &root_x, &root_y, &win_x, &win_y,
-                  &mask_return);
+//     Bool result = XQueryPointer(dpy, win,
+//                   &root_return, &child_return,
+//                   &root_x, &root_y, &win_x, &win_y,
+//                   &mask_return);
 
-    if (!result) {
-        // Cursor not on the same screen, don't update mousePos
-        return;
+//     if (!result) {
+//         // Cursor not on the same screen, don't update mousePos
+//         return;
+//     }
+
+//     mousePos[0] = (float)win_x;
+//     mousePos[1] = (float)(gl.yres - win_y);
+//     //cout << "polling mouse: " << win_x << ", " << win_y << std::endl;
+// }
+
+void* mousePollThread(void* arg) {
+    (void)arg; // Gets rid of warning for not using arg
+    Display *dpy = x11.getDisplayPointer();
+    Window win = x11.getWindowHandle();
+
+    while (true) {
+        Window root_return, child_return;
+        int root_x, root_y;
+        int win_x, win_y;
+        unsigned int mask_return;
+
+        if (XQueryPointer(dpy, win,
+                          &root_return, &child_return,
+                          &root_x, &root_y,
+                          &win_x, &win_y,
+                          &mask_return)) {
+            gl.polledMouseX.store((float)win_x);
+            gl.polledMouseY.store((float)(gl.yres - win_y));
+        }
+
+        usleep(100000); // rate of poll
     }
-
-    mousePos[0] = (float)win_x;
-    mousePos[1] = (float)(gl.yres - win_y);
-    //cout << "polling mouse: " << win_x << ", " << win_y << std::endl;
+    return NULL;
 }
 
 void physics()
 {
     Flt d0,d1,dist;
 
-    static struct timespec lastPollTime = {0, 0};
-    struct timespec now;
-    clock_gettime(CLOCK_REALTIME, &now);
-    double dt = timeDiff(&lastPollTime, &now);
-    if (dt > .1) { // rate to poll for mouse position
-        pollMousePosition(x11.getDisplayPointer(), x11.getWindowHandle());
-        timeCopy(&lastPollTime, &now);
-    }
+    // static struct timespec lastPollTime = {0, 0};
+    // struct timespec now;
+    // clock_gettime(CLOCK_REALTIME, &now);
+    // double dt = timeDiff(&lastPollTime, &now);
+    // if (dt > .1) { // rate to poll for mouse position
+    //     pollMousePosition(x11.getDisplayPointer(), x11.getWindowHandle());
+    //     timeCopy(&lastPollTime, &now);
+    // }
+
+    mousePos[0] = gl.polledMouseX.load();
+    mousePos[1] = gl.polledMouseY.load();
 
     if (gl.keys[XK_space] || gl.keys[Button1]) {
         shootBullet();
