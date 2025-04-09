@@ -168,6 +168,7 @@ class Game {
         int score;
         GLuint stardustTexture;
         GLuint ufoTexture;
+        Vec pos;
         Ship ship;
         Asteroid *ahead;
         Bullet *barr;
@@ -457,7 +458,13 @@ extern void addThrustParticle(float x, float y, float dx, float dy);
 //
 extern void drawIntro();
 extern bool introDone;
-
+extern void drawNebulaBackground();
+extern void initEnemies();
+extern void spawnEnemy();
+extern void moveEnemiesTowardPlayer();
+extern void renderEnemies();
+extern void updateEnemySpawnTimer();
+extern void hitEnemy(float x, float y);
 //
 //========================================
 
@@ -468,6 +475,7 @@ int main()
 {
     logOpen();
     init_opengl();
+    initEnemies();
     srand(time(NULL));
     clock_gettime(CLOCK_REALTIME, &timePause);
     clock_gettime(CLOCK_REALTIME, &timeStart);
@@ -491,11 +499,12 @@ int main()
             physics();
             physicsCountdown -= physicsRate;
         }
-        //render();
+        render();
         if (!introDone) {
             drawIntro();
         } else {
             renderMenu();
+            //initEnemies();
         }
         x11.swapBuffers();
         
@@ -1021,7 +1030,14 @@ void physics()
         //move the bullet
         b->pos[0] += b->vel[0];
         b->pos[1] += b->vel[1];
-        
+       
+        //Enemy
+        if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
+           hitEnemy(b->pos[0], b->pos[1]);
+           moveEnemiesTowardPlayer();
+           updateEnemySpawnTimer();
+        } 
+
         // bounce the bullets/ kill the bullet
         if (b->pos[0] < 0.0f) {
             memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
@@ -1077,6 +1093,12 @@ void physics()
     // adds some friction
     g.ship.vel[0] *= 0.99f; 
     g.ship.vel[1] *= 0.99f;
+
+    //Enemy
+    if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
+        moveEnemiesTowardPlayer();
+        updateEnemySpawnTimer();
+    }
 
     // keep ship within window
     if (g.ship.pos[0] < 0) g.ship.pos[0] = 0;
@@ -1405,6 +1427,7 @@ glEnable(GL_BLEND);
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 // Draw background
+/*
 if (gl.background) {
     glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
     glBegin(GL_QUADS);
@@ -1414,6 +1437,23 @@ if (gl.background) {
         glTexCoord2f(1.0f, 1.0f); glVertex2i(gl.xres, 0);  
     glEnd();
 }
+*/
+
+if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
+    drawNebulaBackground(); // replaces gl.backgroundTexture
+    updateEnemySpawnTimer();
+    moveEnemiesTowardPlayer();
+    renderEnemies();
+} else if (gl.background) {
+    glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+        glTexCoord2f(0.0f, 0.0f); glVertex2i(0, gl.yres);
+        glTexCoord2f(1.0f, 0.0f); glVertex2i(gl.xres, gl.yres);
+        glTexCoord2f(1.0f, 1.0f); glVertex2i(gl.xres, 0);
+    glEnd();
+}
+
 
 // Game info text
 r.bot = gl.yres - 20;

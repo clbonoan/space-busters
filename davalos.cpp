@@ -14,6 +14,9 @@ ___|____|____|____|
 #include <GL/glx.h>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
+#include <cmath>
+
 using namespace std;
 
 class Global {
@@ -22,8 +25,14 @@ class Global {
         char keys[65536];
 };
 
+class Ship {
+public:
+    float pos[3];  // Only need pos to follow player
+};
+
 class Game {
     public:
+        Ship ship;
         enum GameMode {
             MAIN_MENU,
             ENDLESS_MODE,
@@ -51,6 +60,139 @@ extern Global gl;
 extern Game g;
 extern void setGameMode(Game::GameMode mode);
 
+//Enemy logic
+const int MAX_ENEMIES = 30;
+GLuint enemyTexture = 0;
+
+struct Enemy {
+    float x, y;
+    float speed;
+    bool active;
+};
+
+Enemy enemies[MAX_ENEMIES];
+int enemySpawnTimer = 0;
+
+extern unsigned char *buildAlphaData(Image *img);
+
+void initEnemies() 
+{
+    for (int i=0; i < MAX_ENEMIES; i++) {
+        enemies[i].active = 0;
+    }
+
+    //load texture for enemy once
+    glGenTextures(1, &enemyTexture);
+    glBindTexture(GL_TEXTURE_2D, enemyTexture);
+
+    Image img("./images/enemy1.png");
+    printf("loaded enemy image: %d x %d\n", img.width, img.height);
+    unsigned char *enemyData = buildAlphaData(&img);
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height,
+                 0,GL_RGB, GL_UNSIGNED_BYTE, enemyData);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    free(enemyData);
+}
+
+void spawnEnemy()
+{
+    for (int i=0; i < MAX_ENEMIES; i++) {
+        if (!enemies[i].active) {
+            enemies[i].x = rand() % gl.xres;
+            enemies[i].y = gl.yres;
+            enemies[i].speed = 1.0f;
+            enemies[i].active = true;
+            printf("spawned enemy at (%f, %f)\n", enemies[i].x, enemies[i].y);
+            break;
+        }
+    }
+}
+
+void moveEnemiesTowardPlayer() 
+{
+    for (int i=0; i < MAX_ENEMIES; i++) {
+        if (enemies[i].active) {
+            //float dx = g.shipPosX - enemies[i].x;
+            //float dy = g.shipPosY - enemies[i].y;
+            //float shipX = g.ship.pos[0];
+            //float shipY = g.ship.pos[1];
+            //float dx = shipX - enemies[i].x;
+            //float dy = shipY - enemies[i].y;
+            float dx = g.ship.pos[0] - enemies[i].x;
+            float dy = g.ship.pos[1] - enemies[i].y;
+            float dist = sqrt(dx * dx + dy * dy);
+            if (dist > 0.0f) {
+                enemies[i].x += (dx / dist) * enemies[i].speed;
+                enemies[i].y += (dy / dist) * enemies[i].speed;
+            }
+        }
+    }
+}
+
+void renderEnemies()
+{
+    float w = 32.0f, h = 32.0f;
+    
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBindTexture(GL_TEXTURE_2D, enemyTexture);
+
+    for (int i=0; i<MAX_ENEMIES; i++) {
+        if (enemies[i].active) {
+            glPushMatrix();
+            glTranslatef(enemies[i].x, enemies[i].y, 0);
+
+            glBegin(GL_QUADS);
+                glTexCoord2f(0.0f, 0.0f); glVertex2f(-w, -h);
+                glTexCoord2f(0.0f, 1.0f); glVertex2f(-w, h);
+                glTexCoord2f(1.0f, 1.0f); glVertex2f(w, h);
+                glTexCoord2f(1.0f, 0.0f); glVertex2f(w, -h);
+            glEnd();
+            glPopMatrix();
+        }
+    }
+ 
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+}
+
+void updateEnemySpawnTimer() 
+{
+   static int spawnTime = 0;
+   spawnTime++;
+   if (spawnTime >= 3600) {
+       spawnEnemy();
+       spawnTime = 0;
+   }
+} 
+
+void hitEnemy(float x, float y) 
+{
+    for (int i=0; i < MAX_ENEMIES; i++) {
+        if (enemies[i].active) {
+            float dx = enemies[i].x - x;
+            float dy = enemies[i].y - y;
+            float dist = sqrt(dx*dx + dy*dy);
+            if (dist < 30.0f) {
+                enemies[i].active = false;
+                break;
+            }
+        }
+    }
+}
+
+// Animation variables
+int introFrame = 0;
+bool introDone = false;
+int frameCounter = 0;
+int nebulaFrame = 0;
+int nebulaCounter = 0;
+
 // Image array for intro animation
 const int NUM_INTRO_FRAMES = 4;
 Image introImages[NUM_INTRO_FRAMES] = {
@@ -60,10 +202,13 @@ Image introImages[NUM_INTRO_FRAMES] = {
     "./images/ufo-R.png"
 };
 
-// Animation variables
-int introFrame = 0;
-bool introDone = false;
-int frameCounter = 0; // Controls timing for switching frames
+// Image array for nebula background animation
+const int NUM_NEBULA_FRAMES = 3;
+Image nebulaImages[NUM_NEBULA_FRAMES] = {
+    "./images/neb1.png",
+    "./images/neb2.png",
+    "./images/neb3.png"
+};
 
 void show_davalos(Rect *r)
 {
@@ -72,7 +217,8 @@ void show_davalos(Rect *r)
 
 
 // Start of program animated intro
-void drawIntro() {
+void drawIntro() 
+{
     if (introDone) return;
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -140,4 +286,32 @@ void drawIntro() {
 
 
     usleep(20000); // Pause for smooth animation
+}
+
+void drawNebulaBackground() 
+{
+    Image &currentFrame = nebulaImages[nebulaFrame];
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, currentFrame.width, currentFrame.height,
+                0, GL_RGB, GL_UNSIGNED_BYTE, currentFrame.data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glEnable(GL_TEXTURE_2D);
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+        glTexCoord2f(0.0f, 0.0f); glVertex2i(0, gl.yres);
+        glTexCoord2f(1.0f, 0.0f); glVertex2i(gl.xres, gl.yres);
+        glTexCoord2f(1.0f, 1.0f); glVertex2i(gl.xres, 0);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+    glDeleteTextures(1, &tex);
+
+    nebulaCounter++;
+    if (nebulaCounter > 5) {
+        nebulaFrame = (nebulaFrame + 1) % NUM_NEBULA_FRAMES;
+        nebulaCounter = 0;
+    }
 }
