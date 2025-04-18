@@ -466,6 +466,8 @@ extern void renderEnemies();
 extern void updateEnemySpawnTimer();
 extern void hitEnemy(float x, float y);
 //
+//
+float shipTargetPos[2] = {0.0f, 0.0f};
 //========================================
 
 //==========================================================================
@@ -1089,6 +1091,10 @@ void physics()
 
     g.ship.pos[0] += g.ship.vel[0];
     g.ship.pos[1] += g.ship.vel[1];
+
+    shipTargetPos[0] = g.ship.pos[0];
+    shipTargetPos[1] = g.ship.pos[1];
+
 
     // adds some friction
     g.ship.vel[0] *= 0.99f; 

@@ -66,6 +66,8 @@ GLuint enemyTexture = 0;
 
 struct Enemy {
     float x, y;
+    float vx, vy;
+    float ax, ay;
     float speed;
     bool active;
 };
@@ -74,6 +76,7 @@ Enemy enemies[MAX_ENEMIES];
 int enemySpawnTimer = 0;
 
 extern unsigned char *buildAlphaData(Image *img);
+extern float shipTargetPos[2];
 
 void initEnemies() 
 {
@@ -90,7 +93,11 @@ void initEnemies()
     unsigned char *enemyData = buildAlphaData(&img);
     
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height,
-                 0,GL_RGB, GL_UNSIGNED_BYTE, enemyData);
+             0, GL_RGBA, GL_UNSIGNED_BYTE, enemyData);
+
+    
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height,
+    //             0,GL_RGB, GL_UNSIGNED_BYTE, enemyData);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -104,13 +111,16 @@ void spawnEnemy()
         if (!enemies[i].active) {
             enemies[i].x = rand() % gl.xres;
             enemies[i].y = gl.yres;
-            enemies[i].speed = 1.0f;
+            enemies[i].vx = enemies[i].vy = 0.0f;
+            enemies[i].ax = enemies[i].ay = 0.0f;
+            enemies[i].speed = 0.5f;
             enemies[i].active = true;
             printf("spawned enemy at (%f, %f)\n", enemies[i].x, enemies[i].y);
             break;
         }
     }
 }
+
 
 void moveEnemiesTowardPlayer() 
 {
@@ -122,12 +132,33 @@ void moveEnemiesTowardPlayer()
             //float shipY = g.ship.pos[1];
             //float dx = shipX - enemies[i].x;
             //float dy = shipY - enemies[i].y;
-            float dx = g.ship.pos[0] - enemies[i].x;
-            float dy = g.ship.pos[1] - enemies[i].y;
+            float dx = shipTargetPos[0] - enemies[i].x;
+            float dy = shipTargetPos[1] - enemies[i].y;
             float dist = sqrt(dx * dx + dy * dy);
             if (dist > 0.0f) {
-                enemies[i].x += (dx / dist) * enemies[i].speed;
-                enemies[i].y += (dy / dist) * enemies[i].speed;
+                float accel = 0.25f;
+                float damping = 0.90f;
+                float maxSpeed = 1.8f;
+
+                enemies[i].vx += (dx / dist) * accel;
+                enemies[i].vy += (dy / dist) * accel;
+
+                //Velocity and Acceleration
+                enemies[i].vx *= damping;
+                enemies[i].vy *= damping;
+                
+                //speed cap
+                float speed = sqrt(enemies[i].vx * enemies[i].vx + 
+                                   enemies[i].vy * enemies[i].vy);
+                if (speed > maxSpeed) {
+                    float scale = maxSpeed / speed;
+                    enemies[i].vx *= scale;
+                    enemies[i].vy *= scale;
+                }
+
+                enemies[i].x += enemies[i].vx;
+                enemies[i].y += enemies[i].vy;
+
             }
         }
     }
@@ -148,10 +179,10 @@ void renderEnemies()
             glTranslatef(enemies[i].x, enemies[i].y, 0);
 
             glBegin(GL_QUADS);
-                glTexCoord2f(0.0f, 0.0f); glVertex2f(-w, -h);
-                glTexCoord2f(0.0f, 1.0f); glVertex2f(-w, h);
-                glTexCoord2f(1.0f, 1.0f); glVertex2f(w, h);
-                glTexCoord2f(1.0f, 0.0f); glVertex2f(w, -h);
+                glTexCoord2f(0.0f, 1.0f); glVertex2f(-w, -h);
+                glTexCoord2f(0.0f, 0.0f); glVertex2f(-w, h);
+                glTexCoord2f(1.0f, 0.0f); glVertex2f(w, h);
+                glTexCoord2f(1.0f, 1.0f); glVertex2f(w, -h);
             glEnd();
             glPopMatrix();
         }
@@ -194,13 +225,29 @@ int nebulaFrame = 0;
 int nebulaCounter = 0;
 
 // Image array for intro animation
-const int NUM_INTRO_FRAMES = 4;
+const int NUM_INTRO_FRAMES = 36;
+
 Image introImages[NUM_INTRO_FRAMES] = {
-    "./images/stardust-health.png",
-    "./images/ufo-G.png",
-    "./images/ufo-B.png",
-    "./images/ufo-R.png"
+    "./images/apple_frames/intro0.png",  "./images/apple_frames/intro1.png",
+    "./images/apple_frames/intro2.png",  "./images/apple_frames/intro3.png",
+    "./images/apple_frames/intro4.png",  "./images/apple_frames/intro5.png",
+    "./images/apple_frames/intro6.png",  "./images/apple_frames/intro7.png",
+    "./images/apple_frames/intro8.png",  "./images/apple_frames/intro9.png",
+    "./images/apple_frames/intro10.png", "./images/apple_frames/intro11.png",
+    "./images/apple_frames/intro12.png", "./images/apple_frames/intro13.png",
+    "./images/apple_frames/intro14.png", "./images/apple_frames/intro15.png",
+    "./images/apple_frames/intro16.png", "./images/apple_frames/intro17.png",
+    "./images/apple_frames/intro18.png", "./images/apple_frames/intro19.png",
+    "./images/apple_frames/intro20.png", "./images/apple_frames/intro21.png",
+    "./images/apple_frames/intro22.png", "./images/apple_frames/intro23.png",
+    "./images/apple_frames/intro24.png", "./images/apple_frames/intro25.png",
+    "./images/apple_frames/intro26.png", "./images/apple_frames/intro27.png",
+    "./images/apple_frames/intro28.png", "./images/apple_frames/intro29.png",
+    "./images/apple_frames/intro30.png", "./images/apple_frames/intro31.png",
+    "./images/apple_frames/intro32.png", "./images/apple_frames/intro33.png",
+    "./images/apple_frames/intro34.png", "./images/apple_frames/intro35.png"
 };
+
 
 // Image array for nebula background animation
 const int NUM_NEBULA_FRAMES = 3;
@@ -231,7 +278,7 @@ void drawIntro()
     glLoadIdentity();
 
     // Get current image
-    Image &currentImage = introImages[introFrame];
+    Image &img = introImages[introFrame];
 
     // Bind texture
     GLuint introTexture;
@@ -239,8 +286,8 @@ void drawIntro()
     glBindTexture(GL_TEXTURE_2D, introTexture);
 
     glTexImage2D(GL_TEXTURE_2D, 0, 3, 
-                currentImage.width, currentImage.height, 0,
-                GL_RGB, GL_UNSIGNED_BYTE, currentImage.data);
+                img.width, img.height, 0,
+                GL_RGB, GL_UNSIGNED_BYTE, img.data);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -263,29 +310,36 @@ void drawIntro()
     //introFrame, frameCounter);
 
     // Update frame counter
-    frameCounter++;
-    if (frameCounter > 3) { // Change image every 50 frames
-        introFrame = (introFrame + 1) % NUM_INTRO_FRAMES;
-        frameCounter = 0;
-    }
+    //frameCounter++;
+    //if (frameCounter > 1) { // Change image every 50 frames
+    //    introFrame = (introFrame + 1) % NUM_INTRO_FRAMES;
+    //    frameCounter = 0;
+    //}
 
     // End intro after one full cycle of images
-    if (introFrame == NUM_INTRO_FRAMES - 1 && frameCounter >= 3) {
-        usleep(500000);
-        //printf("Intro finished! Switching to Main Menu.\n");
-        introDone = true; // Mark the intro as complete
-        setGameMode(Game::MAIN_MENU); // Move to the menu
-        /*
-        // Ensure a final screen refresh happens
-        glClear(GL_COLOR_BUFFER_BIT);
-        glLoadIdentity();
-        glOrtho(0, gl.xres, 0, gl.yres, -1, 1);
-        glFlush();
-        */
+    //if (introFrame == NUM_INTRO_FRAMES - 1 && frameCounter >= 3) {
+    //    usleep(500000);
+    //    //printf("Intro finished! Switching to Main Menu.\n");
+    //    introDone = true; // Mark the intro as complete
+    //    setGameMode(Game::MAIN_MENU); // Move to the menu
+    //    /*
+    //    // Ensure a final screen refresh happens
+    //    glClear(GL_COLOR_BUFFER_BIT);
+    //    glLoadIdentity();
+    //    glOrtho(0, gl.xres, 0, gl.yres, -1, 1);
+    //    glFlush();
+    //    */
+    //}
+
+
+    //usleep(20000); // Pause for smooth animation
+    usleep(6000);
+    introFrame++;
+
+    if (introFrame >= NUM_INTRO_FRAMES) {
+        introDone = true;
+        setGameMode(Game::MAIN_MENU);
     }
-
-
-    usleep(20000); // Pause for smooth animation
 }
 
 void drawNebulaBackground() 
