@@ -9,8 +9,9 @@
 #include <X11/keysym.h>
 #include <cstring>
 
-extern Global gl;
-extern Game g;
+//extern Global gl;
+//extern Game g;
+
 
 using namespace std;
 
@@ -120,7 +121,7 @@ void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelect
     glEnable(GL_TEXTURE_2D);
 
     // title
-    ggprint8b(&r, 24, 0x00ffff00, "Game Menu");
+    //ggprint8b(&r, 24, 0x00ffff00, "Game Menu");
 
     // options
     ggprint8b(&r, 16, (menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Endless Mode");
@@ -148,12 +149,13 @@ void drawPauseMenu(int xres, int yres, int menuSelection)
 
 }
 
-/*
+
 //--------------------------------------------------------------
 //added function to handle main menu choices
 //--------------------------------------------------------------
-void handleMainMenuInput(char *keys, int menuSelection, bool *prevKeys, 
-        GameMode &gameMode, bool &inMenu) {
+void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[], 
+        int &gameMode, bool &inMenu) {
+
     // handle menu navigation with keyboard input
     if (keys[XK_Up] && !prevKeys[XK_Up])
         menuSelection = (menuSelection == 0) ? 3 : menuSelection - 1;
@@ -162,7 +164,7 @@ void handleMainMenuInput(char *keys, int menuSelection, bool *prevKeys,
     //g.menuSelection ^= 1;   //XOR to toggle between 0 and 1
 
     // update prevKeys; prevents multiple presses per key press
-    memcpy(prevKeys, keys, sizeof(keys));
+    memcpy(prevKeys, keys, 65536);
 
     // confirm selection with Enter key
     if (keys[XK_Return]) {
@@ -171,16 +173,19 @@ void handleMainMenuInput(char *keys, int menuSelection, bool *prevKeys,
         // start selected game mode
         switch (menuSelection) {
             case 0: // endless mode
-                gameMode = Game::ENDLESS_MODE;
+                //gameMode = Game::ENDLESS_MODE;
+                gameMode = 1;
                 //gameMode = static_cast<int>(Game::ENDLESS_MODE);
                 break;
             case 1: // boss mode
                 //gameMode = static_cast<int>(Game::BOSS_MODE);
-                gameMode = Game::BOSS_MODE;
+                gameMode = 2;
+                //gameMode = Game::BOSS_MODE;
                 break;
             case 2: // ship selection
                 //gameMode = static_cast<int>(Game::SHIP_SELECTION);
-                gameMode = Game::SHIP_SELECTION;
+                gameMode = 3;
+                //gameMode = Game::SHIP_SELECTION;
                 break;
             case 3: // exit
                 exit(0);
@@ -188,5 +193,37 @@ void handleMainMenuInput(char *keys, int menuSelection, bool *prevKeys,
         }
     }
 }
-*/
+
+// ---------------------------------------------------------
+// add function to handle pause menu input
+// ---------------------------------------------------------
+void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[], 
+        int &gameMode, bool &inMenu, bool &isPaused) {
+    if (keys[XK_Up] && !prevKeys[XK_Up])
+        menuSelection = (menuSelection == 0) ? 2 : menuSelection - 1;
+    if (keys[XK_Down] && !prevKeys[XK_Down])
+        menuSelection = (menuSelection == 2) ? 0 : menuSelection + 1;
+
+    // update prevKeys; prevents multiple presses per key press
+    memcpy(prevKeys, keys, 65536);
+
+    // selecting option
+    if (keys[XK_Return]) {
+        isPaused = false;
+        switch (menuSelection) {
+            case 0: // resume
+                isPaused = false;
+                break;
+            case 1: // go to main menu
+                inMenu = true;
+                isPaused = false;
+                gameMode = 1;
+                //gameMode = Game::MAIN_MENU;
+                break;
+            case 2: // exit game
+                exit(0);
+                break;
+        }
+    }
+}
 

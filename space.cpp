@@ -85,7 +85,6 @@ class Global {
         int background;
         atomic<float> polledMouseX{0};
         atomic<float> polledMouseY{0};
-        
         Global() {
             xres = 1280;
             yres = 720;
@@ -119,13 +118,11 @@ class Ship {
             color[0] = color[1] = color[2] = 1.0;
             health = 1.0; 
         }
-
         void takeDamage(int damage) {
             health -= damage;
             if (health < 0)
                 health = 0;
         }
-
         void heal(int amount) {
             health += amount;
             if (health > 1.0)
@@ -230,7 +227,7 @@ class Game {
                 //a->color[2] = 0.7;
                 a->color[0] = rnd();
                 a->color[1] = rnd();
-                a->color[2] = rnd(); 
+                a->color[2] = rnd();
                 a->vel[0] = (Flt)(rnd()*2.0-1.0);
                 a->vel[1] = (Flt)(rnd()*2.0-1.0);
                 a->next = ahead;
@@ -443,8 +440,8 @@ void render();
 void drawHealthBar(float health);
 void renderMenu();
 //void drawMenu();
-void handleMainMenuInput();
-void handlePauseMenuInput();
+//void handleMainMenuInput();
+//void handlePauseMenuInput();
 void drawPauseMenu();
 void cleanupTextures();
 void* mousePollThread(void* arg);
@@ -1295,20 +1292,26 @@ void updateGame() {
 void renderMenu() {
     if (g.inMenu) {
         drawMenu(gl.title, gl.xres, gl.yres, gl.titleTexture, g.menuSelection);
-        //handleMainMenuInput(gl.keys, g.menuSelection, g.prevKeys, g.gameMode, g.inMenu);
-        handleMainMenuInput();
+        int tmpGameMode = static_cast<int>(g.gameMode);
+        handleMainMenuInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode, g.inMenu);
+        g.gameMode = static_cast<Game::GameMode>(tmpGameMode);
         return;
     }
     if (g.isPaused) {
         drawPauseMenu(gl.xres, gl.yres, g.menuSelection);
-        handlePauseMenuInput();
+        //handlePauseMenuInput();
+        int tmpGameMode = static_cast<int>(g.gameMode);
+        handlePauseMenuInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode, 
+                g.inMenu, g.isPaused);
+        g.gameMode = static_cast<Game::GameMode>(tmpGameMode);
         return;
     }
 
     if (g.gameMode == Game::MAIN_MENU) {
         drawMenu(gl.title, gl.xres, gl.yres, gl.titleTexture, g.menuSelection);
-        //handleMainMenuInput(gl.keys, g.menuSelection, g.prevKeys, g.gameMode, g.inMenu);
-        handleMainMenuInput();
+        int tmpGameMode = static_cast<int>(g.gameMode);
+        handleMainMenuInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode, g.inMenu);
+        g.gameMode = static_cast<Game::GameMode>(tmpGameMode);
         return;
     } else if (g.gameMode == Game::ENDLESS_MODE) {
         // add calls to functions that spawn certain enemies, etc..
@@ -1327,6 +1330,7 @@ void renderMenu() {
     }
 }
 
+/*
 //--------------------------------------------------------------
 //added function to handle main menu choices
 //--------------------------------------------------------------
@@ -1361,8 +1365,9 @@ void handleMainMenuInput() {
                 break;
         }
     }
-}
+}*/
 
+/*
 // ---------------------------------------------------------
 // add function to handle pause menu input
 // ---------------------------------------------------------
@@ -1392,7 +1397,7 @@ void handlePauseMenuInput() {
                 break;
         }
     }
-}
+}*/
 
 void drawUFO(float x, float y, GLuint texture) {
     float w = 32.0f * 0.7, h = 32.0f * 0.7; //shrank to 70%
