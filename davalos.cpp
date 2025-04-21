@@ -118,30 +118,36 @@ void initEnemies()
 
 void spawnEnemy()
 {
-    int type = rand() % 3;
+    int type = rand() % 2;
 
-    for (int i=0; i < MAX_ENEMIES; i++) {
-        if (!enemies[i].active) {
-            enemies[i].x = rand() % gl.xres;
-            enemies[i].y = gl.yres;
-            enemies[i].vx = enemies[i].vy = 0.0f;
-            enemies[i].ax = enemies[i].ay = 0.0f;
-            enemies[i].speed = 0.5f;
-            enemies[i].active = true;
-            printf("spawned enemy at (%f, %f)\n",
-                    enemies[i].x, enemies[i].y);
-            break;
+    if( type != 1) {
+        for (int i=0; i < MAX_ENEMIES; i++) {
+            if (!enemies[i].active) {
+                enemies[i].x = rand() % gl.xres;
+                enemies[i].y = gl.yres;
+                enemies[i].vx = enemies[i].vy = 0.0f;
+                enemies[i].ax = enemies[i].ay = 0.0f;
+                enemies[i].speed = 0.5f;
+                enemies[i].active = true;
+                printf("spawned enemy at (%f, %f)\n",
+                        enemies[i].x, enemies[i].y);
+                break;
+            }
         }
-        if (type == 1 && !goldenEnemies[i].active) {
-            goldenEnemies[i].x = rand() % gl.xres;
-            goldenEnemies[i].y = gl.yres + 50;
-            goldenEnemies[i].vx = goldenEnemies[i].vy = 0.0f;
-            goldenEnemies[i].ax = goldenEnemies[i].ay = 0.0f;
-            goldenEnemies[i].speed = 0.5f;
-            goldenEnemies[i].active = true;
-            printf("spawned golden enemy at (%f, %f)\n",
-                    goldenEnemies[i].x, goldenEnemies[i].y);
-            break;
+    }
+    if (type == 1) {
+        for (int i = 0; i < MAX_ENEMIES; i++) {
+            if (!goldenEnemies[i].active) {
+                goldenEnemies[i].x = rand() % gl.xres;
+                goldenEnemies[i].y = gl.yres + 50;
+                goldenEnemies[i].vx = goldenEnemies[i].vy = 0.0f;
+                goldenEnemies[i].ax = goldenEnemies[i].ay = 0.0f;
+                goldenEnemies[i].speed = 0.5f;
+                goldenEnemies[i].active = true;
+                printf("spawned golden enemy at (%f, %f)\n",
+                        goldenEnemies[i].x, goldenEnemies[i].y);
+                break;
+            }
         }
     }
 }
@@ -281,6 +287,19 @@ void hitEnemy(float x, float y)
             float dist = sqrt(dx*dx + dy*dy);
             if (dist < 30.0f) {
                 enemies[i].active = false;
+                break;
+            }
+        }
+    }
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        if (goldenEnemies[i].active) {
+            float dx = goldenEnemies[i].x - x;
+            float dy = goldenEnemies[i].y - y;
+            float dist = sqrt(dx * dx + dy * dy);
+            if (dist < 30.0f) {
+                goldenEnemies[i].active = false;
+                printf("golden enemy hit at (%f, %f)\n",
+                       goldenEnemies[i].x, goldenEnemies[i].y);
                 break;
             }
         }

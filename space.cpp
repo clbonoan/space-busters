@@ -1041,8 +1041,6 @@ void physics()
         //Enemy
         if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
            hitEnemy(b->pos[0], b->pos[1]);
-           moveEnemiesTowardPlayer();
-           updateEnemySpawnTimer();
         } 
 
         // bounce the bullets/ kill the bullet
