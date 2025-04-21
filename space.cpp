@@ -140,6 +140,7 @@ class Bullet {
         Bullet() { }
 };
 
+/*
 class Asteroid {
     public:
         Vec pos;
@@ -158,6 +159,7 @@ class Asteroid {
             next = NULL;
         }
 };
+*/
 
 class Game {
     public:
@@ -167,10 +169,10 @@ class Game {
         GLuint ufoTexture;
         Vec pos;
         Ship ship;
-        Asteroid *ahead;
+        //Asteroid *ahead;
         Bullet *barr;
         int showStardust;
-        int nasteroids;
+        //int nasteroids;
         int nbullets;
         int nenemies;
         struct timespec bulletTimer;
@@ -193,9 +195,9 @@ class Game {
         Game() {
             ufo = 1;
             showStardust = 0;
-            ahead = NULL;
+            //ahead = NULL;
             barr = new Bullet[MAX_BULLETS];
-            nasteroids = 0;
+            //nasteroids = 0;
             nbullets = 0;
             nenemies = 0;
             mouseThrustOn = false;
@@ -205,7 +207,8 @@ class Game {
             isPaused = false;
             score = 0;
             memset(prevKeys, 0, sizeof(prevKeys));
-
+            
+            /*
             for (int j=0; j<8; j++) {
                 Asteroid *a = new Asteroid;
                 a->nverts = 8;
@@ -236,6 +239,8 @@ class Game {
                 ahead = a;
                 ++nasteroids;
             }
+            */
+
             clock_gettime(CLOCK_REALTIME, &bulletTimer);
         }
 
@@ -847,6 +852,7 @@ int check_keys(XEvent *e)
     return 0;
 }
 
+/*
 void deleteAsteroid(Game *g, Asteroid *node)
 {
     //Remove a node from doubly-linked list
@@ -873,11 +879,13 @@ void deleteAsteroid(Game *g, Asteroid *node)
     delete node;
     node = NULL;
 }
+*/
 
 void setGameMode(Game::GameMode mode) {
     g.gameMode = mode;
 }
 
+/*
 void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
 {
     //build ta from a
@@ -909,7 +917,7 @@ void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
     ta->vel[1] = a->vel[1] + (rnd()*2.0-1.0);
     //std::cout << "frag" << std::endl;
 }
-
+*/
 void shootBullet() {
     struct timespec bt;
     clock_gettime(CLOCK_REALTIME, &bt);
@@ -992,7 +1000,7 @@ void* mousePollThread(void* arg) {
 
 void physics()
 {
-    Flt d0,d1,dist;
+    //Flt d0,d1,dist;
 
     // static struct timespec lastPollTime = {0, 0};
     // struct timespec now;
@@ -1111,6 +1119,7 @@ void physics()
 
 
     //Update asteroid positions
+    /*
     Asteroid *a = g.ahead;
     while (a) {
         a->pos[0] += a->vel[0];
@@ -1139,6 +1148,7 @@ void physics()
         a = a->next;
 
     }
+    */
     //extra comment
     //
     //Asteroid collision with bullets?
@@ -1146,6 +1156,7 @@ void physics()
     //     1. delete the bullet
     //     2. break the asteroid into pieces
     //        if asteroid small, delete it
+    /*
     a = g.ahead;
     while (a) {
         //is there a bullet within its radius?
@@ -1155,6 +1166,7 @@ void physics()
             d0 = b->pos[0] - a->pos[0];
             d1 = b->pos[1] - a->pos[1];
             dist = (d0*d0 + d1*d1);
+            
             if (dist < (a->radius*a->radius)) {
                 //===================================================
                 //tracks score: adds point after shooting an enemy
@@ -1198,12 +1210,14 @@ void physics()
                 if (a == NULL)
                     break;
             }
+            
             i++;
         }
         if (a == NULL)
             break;
         a = a->next;
     }
+    */
     //---------------------------------------------------
     //check keys pressed now
     if (gl.keys[XK_Left]) {
@@ -1594,6 +1608,7 @@ r.center = 0;
     glEnable(GL_TEXTURE_2D);
     //-------------------------------------------------------------------------
     //Draw the asteroids
+    /*
     {
         Asteroid *a = g.ahead;
         while (a) {
@@ -1630,6 +1645,7 @@ r.center = 0;
         }
     }
     glEnable(GL_TEXTURE_2D);
+    */
     //-------------------------------------------------------------------------
     //Draw the bullets
     for (int i=0; i<g.nbullets; i++) {

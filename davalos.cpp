@@ -73,6 +73,8 @@ struct Enemy {
 };
 
 Enemy enemies[MAX_ENEMIES];
+GLuint goldenEnemyTexture = 0;
+Enemy goldenEnemies[MAX_ENEMIES];
 int enemySpawnTimer = 0;
 
 extern unsigned char *buildAlphaData(Image *img);
@@ -82,6 +84,7 @@ void initEnemies()
 {
     for (int i=0; i < MAX_ENEMIES; i++) {
         enemies[i].active = 0;
+        goldenEnemies[i].active = 0;
     }
 
     //load texture for enemy once
@@ -94,19 +97,29 @@ void initEnemies()
     
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height,
              0, GL_RGBA, GL_UNSIGNED_BYTE, enemyData);
-
     
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height,
-    //             0,GL_RGB, GL_UNSIGNED_BYTE, enemyData);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     free(enemyData);
+
+    //golden alien
+    glGenTextures(1, &goldenEnemyTexture);
+    glBindTexture(GL_TEXTURE_2D, goldenEnemyTexture);
+    Image goldenImg("./images/golden.png");
+    unsigned char *goldenData = buildAlphaData(&goldenImg);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, goldenImg.width,
+                 goldenImg.height, 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, goldenData);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    free(goldenData);
 }
 
 void spawnEnemy()
 {
+    int type = rand() % 3;
+
     for (int i=0; i < MAX_ENEMIES; i++) {
         if (!enemies[i].active) {
             enemies[i].x = rand() % gl.xres;
@@ -115,7 +128,19 @@ void spawnEnemy()
             enemies[i].ax = enemies[i].ay = 0.0f;
             enemies[i].speed = 0.5f;
             enemies[i].active = true;
-            printf("spawned enemy at (%f, %f)\n", enemies[i].x, enemies[i].y);
+            printf("spawned enemy at (%f, %f)\n",
+                    enemies[i].x, enemies[i].y);
+            break;
+        }
+        if (type == 1 && !goldenEnemies[i].active) {
+            goldenEnemies[i].x = rand() % gl.xres;
+            goldenEnemies[i].y = gl.yres + 50;
+            goldenEnemies[i].vx = goldenEnemies[i].vy = 0.0f;
+            goldenEnemies[i].ax = goldenEnemies[i].ay = 0.0f;
+            goldenEnemies[i].speed = 0.5f;
+            goldenEnemies[i].active = true;
+            printf("spawned golden enemy at (%f, %f)\n",
+                    goldenEnemies[i].x, goldenEnemies[i].y);
             break;
         }
     }
@@ -126,12 +151,6 @@ void moveEnemiesTowardPlayer()
 {
     for (int i=0; i < MAX_ENEMIES; i++) {
         if (enemies[i].active) {
-            //float dx = g.shipPosX - enemies[i].x;
-            //float dy = g.shipPosY - enemies[i].y;
-            //float shipX = g.ship.pos[0];
-            //float shipY = g.ship.pos[1];
-            //float dx = shipX - enemies[i].x;
-            //float dy = shipY - enemies[i].y;
             float dx = shipTargetPos[0] - enemies[i].x;
             float dy = shipTargetPos[1] - enemies[i].y;
             float dist = sqrt(dx * dx + dy * dy);
@@ -161,6 +180,37 @@ void moveEnemiesTowardPlayer()
 
             }
         }
+        if (goldenEnemies[i].active) {
+            float dx = shipTargetPos[0] - goldenEnemies[i].x;
+            float dy = shipTargetPos[1] - goldenEnemies[i].y;
+            float dist = sqrt(dx * dx + dy * dy);
+            if (dist > 0.0f) {
+                float accel = 0.25f;
+                float damping = 0.90f;
+                float maxSpeed = 1.8f;
+
+                goldenEnemies[i].vx += (dx / dist) * accel;
+                goldenEnemies[i].vy += (dy / dist) * accel;
+
+                //Velocity and Acceleration
+                goldenEnemies[i].vx *= damping;
+                goldenEnemies[i].vy *= damping;
+
+                //speed cap
+                float speed = sqrt(goldenEnemies[i].vx *
+                                    goldenEnemies[i].vx +
+                                    goldenEnemies[i].vy *
+                                    goldenEnemies[i].vy);
+                if (speed > maxSpeed) {
+                    float scale = maxSpeed / speed;
+                    goldenEnemies[i].vx *= scale;
+                    goldenEnemies[i].vy *= scale;
+                }
+
+                goldenEnemies[i].x += goldenEnemies[i].vx;
+                goldenEnemies[i].y += goldenEnemies[i].vy;
+            }
+        }
     }
 }
 
@@ -187,6 +237,25 @@ void renderEnemies()
             glPopMatrix();
         }
     }
+
+    glBindTexture(GL_TEXTURE_2D, goldenEnemyTexture);
+
+    for (int i=0; i<MAX_ENEMIES; i++) {
+        if (goldenEnemies[i].active) {
+            printf("Rendering golden at (%f, %f)\n",
+                   goldenEnemies[i].x, goldenEnemies[i].y);
+            glPushMatrix();
+            glTranslatef(goldenEnemies[i].x, goldenEnemies[i].y, 0);
+
+            glBegin(GL_QUADS);
+                glTexCoord2f(0.0f, 1.0f); glVertex2f(-w, -h);
+                glTexCoord2f(0.0f, 0.0f); glVertex2f(-w, h);
+                glTexCoord2f(1.0f, 0.0f); glVertex2f(w, h);
+                glTexCoord2f(1.0f, 1.0f); glVertex2f(w, -h);
+            glEnd();
+            glPopMatrix();
+        }
+    }
  
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
@@ -196,10 +265,11 @@ void updateEnemySpawnTimer()
 {
    static int spawnTime = 0;
    spawnTime++;
-   if (spawnTime >= 3600) {
+   if (spawnTime >= 350) {
        spawnEnemy();
        spawnTime = 0;
    }
+   printf("Enemy timer tick: %d\n", spawnTime);
 } 
 
 void hitEnemy(float x, float y) 
