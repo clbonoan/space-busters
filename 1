@@ -1,0 +1,105 @@
+#include "fonts.h"
+#include "bbarrios.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <cstring>
+
+
+void show_bbarrios(Rect *r)
+{
+    ggprint8b(r, 16, 0x00ff00ff, "bryan - just a chill guy:");
+}
+
+
+
+
+ALCdevice *audioDevice = nullptr;
+ALCcontext *audioContext = nullptr;
+ALuint laserSource;
+ALuint laserBuffer;
+
+bool initOpenAL() {
+    std::cerr << "[DEBUG] Initializing OpenAL...\n";
+
+    audioDevice = alcOpenDevice(nullptr);
+    if (!audioDevice) {
+        std::cerr << "[ERROR] Failed to open OpenAL device\n";
+        return false;
+    }
+
+    audioContext = alcCreateContext(audioDevice, nullptr);
+    if (!audioContext || !alcMakeContextCurrent(audioContext)) {
+        std::cerr << "[ERROR] Failed to create/make context current\n";
+        return false;
+    }
+
+    alGenSources(1, &laserSource);
+    std::cerr << "[DEBUG] Generated laser source\n";
+
+    if (!loadWavFile("laser1.wav", laserBuffer)) {
+        std::cerr << "[ERROR] Failed to load laser1.wav\n";
+        return false;
+    }
+
+    std::cerr << "[DEBUG] Successfully loaded laser1.wav\n";
+    return true;
+}
+
+
+void shutdownOpenAL() {
+    alDeleteSources(1, &laserSource);
+    alDeleteBuffers(1, &laserBuffer);
+    alcMakeContextCurrent(nullptr);
+    if (audioContext) alcDestroyContext(audioContext);
+    if (audioDevice) alcCloseDevice(audioDevice);
+}
+
+bool loadWavFile(const char* filename, ALuint &buffer) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) return false;
+
+    char chunk[4];
+    file.read(chunk, 4);
+    file.ignore(4);
+    file.read(chunk, 4); 
+    file.read(chunk, 4);
+    file.ignore(4);
+
+    short formatType, channels, blockAlign, bitsPerSample;
+    int sampleRate, byteRate;
+    file.read((char*)&formatType, 2);
+    file.read((char*)&channels, 2);
+    file.read((char*)&sampleRate, 4);
+    file.read((char*)&byteRate, 4);
+    file.read((char*)&blockAlign, 2);
+    file.read((char*)&bitsPerSample, 2);
+
+    file.read(chunk, 4); 
+    int dataSize;
+    file.read((char*)&dataSize, 4);
+    std::vector<char> data(dataSize);
+    file.read(data.data(), dataSize);
+
+    ALenum format = (channels == 1)
+        ? (bitsPerSample == 8 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16)
+        : (bitsPerSample == 8 ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16);
+
+    alGenBuffers(1, &buffer);
+    alBufferData(buffer, format, data.data(), dataSize, sampleRate);
+    return true;
+}
+
+void playLaserSound() {
+    std::cerr << "[DEBUG] playLaserSound() called\n";
+    alSourcei(laserSource, AL_BUFFER, laserBuffer);
+    alSourcePlay(laserSource);
+
+    ALenum error = alGetError();
+    if (error != AL_NO_ERROR) {
+        std::cerr << "[ERROR] OpenAL play error: " << error << std::endl;
+    } else {
+        std::cerr << "[DEBUG] Laser sound played successfully\n";
+    }
+}
+

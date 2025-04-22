@@ -1,94 +1,122 @@
 #include "fonts.h"
-//#include <iostream>
-//#include <fstream>
-//#include <vector>
-//#include <cstring>
-
-
+#include "bbarrios.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <cstring>
 
 void show_bbarrios(Rect *r)
 {
-    ggprint8b(r, 16, 0x00ff00ff, "bryan - just a chill guy:");
+    ggprint8b(r, 16, 0x00ff00ff, "Bryan - just a chill guy:");
 }
 
-
-/*
 ALCdevice *audioDevice = nullptr;
 ALCcontext *audioContext = nullptr;
-ALuint audioSource;
+ALuint laserSource;
+ALuint laserBuffer;
 
 bool initOpenAL() {
     audioDevice = alcOpenDevice(nullptr);
     if (!audioDevice) {
-        std::cerr << "Failed to open OpenAL device\n";
+        std::cerr << "OpenAL: Failed to open audio device\n";
         return false;
     }
+
     audioContext = alcCreateContext(audioDevice, nullptr);
     if (!audioContext || !alcMakeContextCurrent(audioContext)) {
-        std::cerr << "Failed to create OpenAL context\n";
+        std::cerr << "OpenAL: Failed to create or set context\n";
         return false;
     }
-    alGenSources(1, &audioSource);
+
+    alGenSources(1, &laserSource);
+    if (!loadWavFile("laser1.wav", laserBuffer)) {
+        std::cerr << "Failed to load laser1.wav\n";
+        return false;
+    }
+
+    std::cout << "OpenAL initialized successfully.\n";
     return true;
 }
 
 void shutdownOpenAL() {
-    alDeleteSources(1, &audioSource);
-    if (audioContext) {
-        alcMakeContextCurrent(nullptr);
-        alcDestroyContext(audioContext);
-    }
-    if (audioDevice)
-        alcCloseDevice(audioDevice);
+    alDeleteSources(1, &laserSource);
+    alDeleteBuffers(1, &laserBuffer);
+    alcMakeContextCurrent(nullptr);
+    if (audioContext) alcDestroyContext(audioContext);
+    if (audioDevice) alcCloseDevice(audioDevice);
+    std::cout << "OpenAL shut down.\n";
 }
 
-bool loadWavFile(const std::string& filename, ALuint &buffer) {
+bool loadWavFile(const char* filename, ALuint &buffer) {
     std::ifstream file(filename, std::ios::binary);
-    if (!file) return false;
+    if (!file) {
+        std::cerr << "ERROR: Cannot open file " << filename << "\n";
+        return false;
+    }
 
-    char chunkId[4];
-    file.read(chunkId, 4);
-    if (std::strncmp(chunkId, "RIFF", 4)) return false;
+    char chunk[4];
+    file.read(chunk, 4);
+    if (strncmp(chunk, "RIFF", 4) != 0) {
+        std::cerr << "ERROR: Not a RIFF file\n";
+        return false;
+    }
 
-    file.ignore(4); // skip chunk size
+    file.ignore(4); 
+    file.read(chunk, 4); 
+    if (strncmp(chunk, "WAVE", 4) != 0) {
+        std::cerr << "ERROR: Not a WAVE file\n";
+        return false;
+    }
 
-    char format[4];
-    file.read(format, 4);
-    if (std::strncmp(format, "WAVE", 4)) return false;
+    file.read(chunk, 4); 
+    int fmtSize;
+    file.read((char*)&fmtSize, 4);
 
-    char subchunk1Id[4];
-    file.read(subchunk1Id, 4);
-    file.ignore(4); // subchunk1 size
-
-    short audioFormat, numChannels, bitsPerSample;
+    short formatType, channels, blockAlign, bitsPerSample;
     int sampleRate, byteRate;
-    short blockAlign;
 
-    file.read((char*)&audioFormat, 2);
-    file.read((char*)&numChannels, 2);
+    file.read((char*)&formatType, 2);
+    file.read((char*)&channels, 2);
     file.read((char*)&sampleRate, 4);
     file.read((char*)&byteRate, 4);
     file.read((char*)&blockAlign, 2);
     file.read((char*)&bitsPerSample, 2);
 
-    file.ignore(8); // skip "data" + data size
+    if (fmtSize > 16) file.ignore(fmtSize - 16);
 
-    std::vector<char> data((std::istreambuf_iterator<char>(file)),
-                           std::istreambuf_iterator<char>());
+    
+    while (true) {
+        file.read(chunk, 4);
+        if (file.eof()) {
+            std::cerr << "ERROR: EOF before data chunk\n";
+            return false;
+        }
 
-    ALenum formatEnum;
-    if (numChannels == 1)
-        formatEnum = (bitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
-    else
-        formatEnum = (bitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
+        int sectionSize;
+        file.read((char*)&sectionSize, 4);
 
-    alGenBuffers(1, &buffer);
-    alBufferData(buffer, formatEnum, data.data(), data.size(), sampleRate);
-    return true;
+        if (strncmp(chunk, "data", 4) == 0) {
+            std::vector<char> data(sectionSize);
+            file.read(data.data(), sectionSize);
+
+            ALenum format = (channels == 1)
+                ? (bitsPerSample == 8 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16)
+                : (bitsPerSample == 8 ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16);
+
+            alGenBuffers(1, &buffer);
+            alBufferData(buffer, format, data.data(), sectionSize, sampleRate);
+
+            std::cout << "WAV loaded successfully: " << filename << "\n";
+            return true;
+        } else {
+            // Skip non-data chunk
+            file.seekg(sectionSize, std::ios::cur);
+        }
+    }
 }
 
-void playSound(ALuint buffer) {
-    alSourcei(audioSource, AL_BUFFER, buffer);
-    alSourcePlay(audioSource);
+void playLaserSound() {
+    alSourcei(laserSource, AL_BUFFER, laserBuffer);
+    alSourcePlay(laserSource);
 }
-*/
+

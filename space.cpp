@@ -8,6 +8,8 @@
 //------------------------------------------------------------
 //changes made:
 //------------------------------------------------------------
+
+#define GGLINUX
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -25,6 +27,8 @@
 #include "cbonoan.h"
 #include <pthread.h>
 #include <atomic>
+#include "bbarrios.h"
+
 
 //texture variables
 //GLuint ufoTexture;
@@ -488,6 +492,13 @@ int main()
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, mousePollThread, NULL);
     int done=0;
+    if (!initOpenAL()) {
+        std::cerr << "OpenAL failed to initialize.\n";
+        return 1;
+    }
+   playLaserSound();
+   sleep(2); 
+
     while (!done) {
         while (x11.getXPending()) {
             XEvent e = x11.getXNextEvent();
@@ -523,6 +534,7 @@ int main()
     cleanup_fonts();
     logClose();
     cleanupTextures();
+    shutdownOpenAL();
     return 0;
 }
 
@@ -949,6 +961,9 @@ void shootBullet() {
         b->color[1] = 1.0f;
         b->color[2] = 1.0f;
         g.nbullets++;
+        std::cout << "playing laser sound..\n";
+        playLaserSound();
+
     }
 }
 
