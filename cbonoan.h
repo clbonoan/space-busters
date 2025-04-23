@@ -24,7 +24,6 @@ void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[],
 void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[], 
         int &gameMode, bool &inMenu, bool &isPaused);
 
-
 #endif
 
 

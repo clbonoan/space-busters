@@ -12,7 +12,6 @@
 //extern Global gl;
 //extern Game g;
 
-
 using namespace std;
 
 void show_christine(Rect *r)
@@ -54,6 +53,7 @@ void drawHealthBar(int xres, float health)
     //debug
     //printf("health: %f\n", g.ship.health);
     
+    /*
     // draws red health background bar
     glColor3f(1.0f, 0.0f, 0.0f);    
     glBegin(GL_QUADS);
@@ -62,9 +62,11 @@ void drawHealthBar(int xres, float health)
     glVertex2f(barX + healthBarWidth, barY + healthBarHeight);
     glVertex2f(barX, barY + healthBarHeight);
     glEnd();
-
+    */
+    
+    //possibly make for loop to draw health bar (starting at 10 boxes for 100)
     // draws blue health bar based on current ship health
-    glColor3f(0.0f, 0.0f, 1.0f);
+    glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_QUADS);
     glVertex2f(barX, barY);
     glVertex2f(barX + (healthBarWidth * health), barY);
@@ -84,6 +86,16 @@ void drawHealthBar(int xres, float health)
     }
 }
 
+void takeDamage() {
+    
+
+}
+
+void heal() {
+
+}
+
+
 // -------------------------------------------------------------------
 // add menu screen to choose endless mode or boss mode before starting
 // -------------------------------------------------------------------
@@ -92,14 +104,15 @@ void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelect
     Rect r;
     glClear(GL_COLOR_BUFFER_BIT);
     if (title) {
+        glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, titleTexture);
         //width and height for title
         int titleWidth = 692;
         int titleHeight = 47;
         int titlexStart = (xres - titleWidth) / 2;
         int titlexEnd = titlexStart + titleWidth;
-        int titleyStart = yres - titleHeight - 300;
-        int titleyEnd = yres - 300;
+        int titleyStart = yres - titleHeight - 200;
+        int titleyEnd = yres - 200;
         /*glBegin(GL_QUADS);
             glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
             glTexCoord2f(0.0f, 0.0f); glVertex2i(0, gl.yres);

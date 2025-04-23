@@ -300,10 +300,10 @@ class Image {
         }   
 };
 
-Image img[3] = { 
-    "./images/title.png",
-    "./images/background.png",
-    "./images/stardust-health.png"
+Image img[1] = { 
+    "./images/title.png"
+    //"./images/background.png",
+    //"./images/stardust-health.png"
 };
 
 //X Windows variables
@@ -607,7 +607,6 @@ glDisable(GL_FOG);
 glDisable(GL_CULL_FACE);
 
 //Clear the screen to black
-//glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
 glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 //Fonts
@@ -636,9 +635,9 @@ for (int i = 0; i < 3; i++) {
 
 // Load other textures
 glGenTextures(1, &gl.titleTexture);
-glGenTextures(1, &gl.backgroundTexture);
+//glGenTextures(1, &gl.backgroundTexture);
 //glGenTextures(1, &gl.ufoTexture);
-glGenTextures(1, &g.stardustTexture);
+//glGenTextures(1, &g.stardustTexture);
 
 // Load title texture
 glBindTexture(GL_TEXTURE_2D, gl.titleTexture);
@@ -648,18 +647,18 @@ glTexImage2D(GL_TEXTURE_2D, 0, 3, img[0].width, img[0].height, 0,
              GL_RGB, GL_UNSIGNED_BYTE, img[0].data);
 
 // Load background texture
-glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-glTexImage2D(GL_TEXTURE_2D, 0, 3, img[1].width, img[1].height, 0,
-             GL_RGB, GL_UNSIGNED_BYTE, img[1].data);
+//glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
+//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//glTexImage2D(GL_TEXTURE_2D, 0, 3, img[1].width, img[1].height, 0,
+//             GL_RGB, GL_UNSIGNED_BYTE, img[1].data);
 
 // Load Stardust texture
-glBindTexture(GL_TEXTURE_2D, g.stardustTexture);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-glTexImage2D(GL_TEXTURE_2D, 0, 3, img[2].width, img[2].height, 0,
-             GL_RGB, GL_UNSIGNED_BYTE, img[2].data);
+//glBindTexture(GL_TEXTURE_2D, g.stardustTexture);
+//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//glTexImage2D(GL_TEXTURE_2D, 0, 3, img[2].width, img[2].height, 0,
+//             GL_RGB, GL_UNSIGNED_BYTE, img[2].data);
 }
 
 
@@ -1357,74 +1356,6 @@ void renderMenu() {
     }
 }
 
-/*
-//--------------------------------------------------------------
-//added function to handle main menu choices
-//--------------------------------------------------------------
-void handleMainMenuInput() {
-    // handle menu navigation with keyboard input
-    if (gl.keys[XK_Up] && !g.prevKeys[XK_Up]) 
-        g.menuSelection = (g.menuSelection == 0) ? 3 : g.menuSelection - 1; 
-    if (gl.keys[XK_Down] && !g.prevKeys[XK_Down])
-        g.menuSelection = (g.menuSelection == 3) ? 3 : g.menuSelection + 1;
-    //g.menuSelection ^= 1;   //XOR to toggle between 0 and 1
-
-    // update prevKeys; prevents multiple presses per key press
-    memcpy(g.prevKeys, gl.keys, sizeof(gl.keys));
-
-    // confirm selection with Enter key
-    if (gl.keys[XK_Return]) {
-        g.inMenu = false;
-
-        // start selected game mode
-        switch (g.menuSelection) {
-            case 0: // endless mode
-                g.gameMode = Game::ENDLESS_MODE;
-                break;
-            case 1: // boss mode
-                g.gameMode = Game::BOSS_MODE;
-                break;
-            case 2: // ship selection
-                g.gameMode = Game::SHIP_SELECTION;
-                break;
-            case 3: // exit
-                exit(0);
-                break;
-        }
-    }
-}*/
-
-/*
-// ---------------------------------------------------------
-// add function to handle pause menu input
-// ---------------------------------------------------------
-void handlePauseMenuInput() {
-    if (gl.keys[XK_Up] && !g.prevKeys[XK_Up])
-        g.menuSelection = (g.menuSelection == 0) ? 2 : g.menuSelection - 1;
-    if (gl.keys[XK_Down] && !g.prevKeys[XK_Down]) 
-        g.menuSelection = (g.menuSelection == 2) ? 0 : g.menuSelection + 1;
-
-    // update prevKeys; prevents multiple presses per key press
-    memcpy(g.prevKeys, gl.keys, sizeof(gl.keys));
-
-    // selecting option
-    if (gl.keys[XK_Return]) {
-        g.isPaused = false;
-        switch (g.menuSelection) {
-            case 0: // resume
-                g.isPaused = false;
-                break;
-            case 1: // go to main menu
-                g.inMenu = true;
-                g.isPaused = false;
-                g.gameMode = Game::MAIN_MENU;
-                break;
-            case 2: // exit game
-                exit(0);
-                break;
-        }
-    }
-}*/
 
 void drawUFO(float x, float y, GLuint texture) {
     float w = 32.0f * 0.7, h = 32.0f * 0.7; //shrank to 70%
@@ -1463,19 +1394,6 @@ Rect r;
 glClear(GL_COLOR_BUFFER_BIT);
 glEnable(GL_BLEND);
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-// Draw background
-/*
-if (gl.background) {
-    glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
-    glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);  
-        glTexCoord2f(0.0f, 0.0f); glVertex2i(0, gl.yres);
-        glTexCoord2f(1.0f, 0.0f); glVertex2i(gl.xres, gl.yres);
-        glTexCoord2f(1.0f, 1.0f); glVertex2i(gl.xres, 0);  
-    glEnd();
-}
-*/
 
 if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
     drawNebulaBackground(); // replaces gl.backgroundTexture
