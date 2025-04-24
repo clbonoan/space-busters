@@ -6,7 +6,7 @@ design a game that implements frameworks written by our professor. Here are the
 basics of our game:
 - Choose your alien and defeat enemy aliens in space!
 - Rack up as many points as you can!
-- Make the wrong moves and GAME END!
+- Make the wrong moves and GAME OVER!
 
 ## Technical Requirements
 - Game loop and logic programmed in C++
