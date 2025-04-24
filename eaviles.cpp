@@ -9,7 +9,6 @@
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <cstring>
-#include "davalos.cpp"
 
 
 void screenRightText(int xres, int yres, int score)
@@ -28,15 +27,15 @@ void show_edwin(Rect *r)
     ggprint8b(r, 16, 0x00ff00ff, "Edwin - Lead Programmer");
 }
 
-void Collision(float w, float x, float y, float z)
-{
-    if(enemies[i].active) {
+//void Collision(float w, float x, float y, float z)
+//{
+  //  if(enemies[i].active) {
         
 
 
 
 
-}
+//}
 
 // made changes to space file
 // changed asteroids and fragments to circles;
