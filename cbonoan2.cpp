@@ -127,14 +127,14 @@ void heal() {
 // -------------------------------------------------------------------
 // add menu screen to choose endless mode or boss mode before starting
 // -------------------------------------------------------------------
-void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelection) 
+void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelection)
 {
     Rect r;
     glClear(GL_COLOR_BUFFER_BIT);
+
     if (title) {
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, titleTexture);
-        //width and height for title
         int titleWidth = 692;
         int titleHeight = 47;
         int titlexStart = (xres - titleWidth) / 2;
@@ -149,19 +149,49 @@ void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelect
         glEnd();
     }
 
-    //glClear(GL_COLOR_BUFFER_BIT);
-    r.bot = yres / 2;
     r.left = xres / 2 - 100;
     r.center = 0;
-    glEnable(GL_TEXTURE_2D);
 
-    // options
-    ggprint8b(&r, 16, (menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Endless Mode");
-    ggprint8b(&r, 16, (menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, "Boss Mode");
-    ggprint8b(&r, 16, (menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Ship Selection");
-    ggprint8b(&r, 16, (menuSelection == 3) ? 0x00ff0000 : 0x00ffffff, "Exit");
+    const int numOptions = 4;
+    const char* options[numOptions] = {
+        "Endless Mode", "Boss Mode", "Ship Selection", "Exit"
+    };
+
+    int menuTop = yres / 2 + 30;
+    int boxWidth = 220;
+    int boxHeight = 20;
+    int spacing = 30;
+
+    for (int i = 0; i < numOptions; i++) {
+        int boxLeft = xres / 2 - boxWidth / 2;
+        int boxRight = boxLeft + boxWidth;
+        int boxTop = menuTop - i * spacing;
+        int boxBottom = boxTop - boxHeight;
+
+        // Draw the text
+        r.bot = boxTop - 14;
+        unsigned int color = (menuSelection == i) ? 0x00ff0000 : 0x00ffffff;
+        glEnable(GL_TEXTURE_2D); // re-enable if needed after drawing shapes
+        ggprint8b(&r, 16, color, options[i]);
+
+        // Draw the box
+        glDisable(GL_TEXTURE_2D);
+        if (menuSelection == i)
+            glColor3f(1.0f, 0.0f, 0.0f); // red box for selected
+        else
+            glColor3f(0.5f, 0.0f, 0.5f); // white box
+
+        glBegin(GL_LINE_LOOP);
+            glVertex2i(boxLeft, boxTop);
+            glVertex2i(boxRight, boxTop);
+            glVertex2i(boxRight, boxBottom);
+            glVertex2i(boxLeft, boxBottom);
+        glEnd();
+    }
+
 
 }
+
 
 //-----------------------------------------------------------------
 // add pause menu
