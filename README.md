@@ -40,7 +40,7 @@ basics of our game:
     - run make command
     - run ./space
 
---
+---
 
 # Developers in this team
 ## Daniel
