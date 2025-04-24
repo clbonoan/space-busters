@@ -1390,32 +1390,31 @@ void cleanupTextures() {
 
 void render()
 {
-Rect r;
-glClear(GL_COLOR_BUFFER_BIT);
-glEnable(GL_BLEND);
-glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    Rect r;
+    glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
-    drawNebulaBackground(); // replaces gl.backgroundTexture
-    updateEnemySpawnTimer();
-    moveEnemiesTowardPlayer();
-    renderEnemies();
-} else if (gl.background) {
-    glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
-    glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
-        glTexCoord2f(0.0f, 0.0f); glVertex2i(0, gl.yres);
-        glTexCoord2f(1.0f, 0.0f); glVertex2i(gl.xres, gl.yres);
-        glTexCoord2f(1.0f, 1.0f); glVertex2i(gl.xres, 0);
-    glEnd();
-}
+    if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
+        drawNebulaBackground(); // replaces gl.backgroundTexture
+        updateEnemySpawnTimer();
+        moveEnemiesTowardPlayer();
+        renderEnemies();
+    } else if (gl.background) {
+        glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
+        glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+            glTexCoord2f(0.0f, 0.0f); glVertex2i(0, gl.yres);
+            glTexCoord2f(1.0f, 0.0f); glVertex2i(gl.xres, gl.yres);
+            glTexCoord2f(1.0f, 1.0f); glVertex2i(gl.xres, 0);
+        glEnd();
+    }
 
-
-// Game info text
-r.bot = gl.yres - 20;
-r.left = 10;
-r.center = 0;
-//ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
+    // Game info text
+   /* r.bot = gl.yres - 20;
+    r.left = 10;
+    r.center = 0;
+    //ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
     //ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g.nasteroids);
     // ----------------------------------------------------------------
     // ggprint8b(&r, 16, 0x00ffff00, "enemies left: %i", g.nenemies);
@@ -1432,15 +1431,19 @@ r.center = 0;
     r.center = 0;
     ggprint8b(&r, 16, 0x00ffffff, "SCORE: %d", g.score);
     //
+    */
+
+    //screenLeftText(gl.xres, gl.yres);
+    //screenRightText(gl.xres, gl.yres, g.score); 
     //=================================================================
     //positioning reset
     //=================================================================
-    r.left = 10;
-    r.bot = gl.yres - 60;
+    //r.left = 10;
+    //r.bot = gl.yres - 60;
     //
     //
     //=================================================================
-
+/*
     if (gl.credits) {
         extern void show_christine(Rect *r);
         extern void show_davalos(Rect *r);
@@ -1458,7 +1461,7 @@ r.center = 0;
         extern void show_instructions(Rect *r);
         show_instructions(&r);
     }
-
+*/
 //-------------------------------------------------------------------------
     //Draw the ship
     /*
@@ -1597,6 +1600,25 @@ r.center = 0;
         glEnd();
     }
     drawHealthBar(gl.xres, g.ship.health);
+    screenLeftText(gl.xres, gl.yres);
+    screenRightText(gl.xres, gl.yres, g.score); 
+    if (gl.credits) {
+        extern void show_christine(Rect *r);
+        extern void show_davalos(Rect *r);
+        extern void show_edwin(Rect *r);
+        extern void show_bbarrios(Rect *r);
+        extern void show_mgarris(Rect *r);
+        show_christine(&r);
+        show_davalos(&r);
+        show_edwin(&r);
+        show_bbarrios(&r);
+        show_mgarris(&r);
+    }
+
+    if (gl.instructions) {
+        show_instructions(gl.yres);
+    }
+
     glEnable(GL_TEXTURE_2D);
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

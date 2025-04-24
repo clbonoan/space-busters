@@ -19,14 +19,42 @@ void show_christine(Rect *r)
     ggprint8b(r, 16, 0x00ff00ff, "Christine - Unknown");
 }
 
-void show_instructions(Rect *r)
+void show_instructions(int yres)
 {
-    ggprint8b(r, 16, 0x00ff00ff, "WASD to move");
-    ggprint8b(r, 16, 0x00ff00ff, "Shift to boost");
-    ggprint8b(r, 16, 0x00ff00ff, "Q to turn left");
-    ggprint8b(r, 16, 0x00ff00ff, "E to turn right");
-    ggprint8b(r, 16, 0x00ff00ff, "Space to shoot");
+    Rect r;
+    r.bot = yres - 100;
+    r.left = 10;
+    r.center = 0;
+    ggprint8b(&r, 16, 0x00ff00ff, "WASD to move");
+    ggprint8b(&r, 16, 0x00ff00ff, "Shift to boost");
+    ggprint8b(&r, 16, 0x00ff00ff, "Q to turn left");
+    ggprint8b(&r, 16, 0x00ff00ff, "E to turn right");
+    ggprint8b(&r, 16, 0x00ff00ff, "Space to shoot");
 }
+
+void screenLeftText(int xres, int yres) 
+{
+    Rect r;
+    r.bot = yres - 20;
+    r.left = 10;
+    r.center = 0;
+    ggprint8b(&r, 16, 0x00ffff00, "Press c for Credits");
+    ggprint8b(&r, 16, 0x00ffff00, "Press i for Instructions");
+
+}
+
+/*
+void screenRightText(int xres, int yres, int score)
+{
+    Rect r;
+    r.bot = yres - 20;
+    r.left = xres - 100;
+    r.center = 0;
+    ggprint8b(&r, 16, 0x00ffffff, "SCORE: %d", score); 
+    r.left = 10;
+    r.bot = yres - 60;
+}
+*/
 
 // --------------------------------------------------------------------
 // added health bar function
@@ -113,12 +141,6 @@ void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelect
         int titlexEnd = titlexStart + titleWidth;
         int titleyStart = yres - titleHeight - 200;
         int titleyEnd = yres - 200;
-        /*glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
-            glTexCoord2f(0.0f, 0.0f); glVertex2i(0, gl.yres);
-            glTexCoord2f(1.0f, 0.0f); glVertex2i(gl.xres, gl.yres);
-            glTexCoord2f(1.0f, 1.0f); glVertex2i(gl.xres, 0);
-        glEnd();*/
         glBegin(GL_QUADS);
             glTexCoord2f(0.0f, 1.0f); glVertex2i(titlexStart, titleyStart);
             glTexCoord2f(0.0f, 0.0f); glVertex2i(titlexStart, titleyEnd);
@@ -132,9 +154,6 @@ void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelect
     r.left = xres / 2 - 100;
     r.center = 0;
     glEnable(GL_TEXTURE_2D);
-
-    // title
-    //ggprint8b(&r, 24, 0x00ffff00, "Game Menu");
 
     // options
     ggprint8b(&r, 16, (menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Endless Mode");

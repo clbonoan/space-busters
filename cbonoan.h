@@ -23,7 +23,9 @@ void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[],
         int &gameMode, bool &inMenu);
 void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[], 
         int &gameMode, bool &inMenu, bool &isPaused);
-
+void screenLeftText(int xres, int yres);
+//void screenRightText(int xres, int yres, int score);
+void show_instructions(int yres);
 #endif
 
 
