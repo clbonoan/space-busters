@@ -12,24 +12,35 @@
 //extern Global gl;
 //extern Game g;
 
+extern void show_davalos(Rect *r);
+extern void show_edwin(Rect *r);
+extern void show_bbarrios(Rect *r);
+extern void show_mgarris(Rect *r);
+
 using namespace std;
 
 void show_christine(Rect *r)
 {
     ggprint8b(r, 16, 0x00ff00ff, "Christine - Unknown");
+    printf("christine credit called\n");
 }
 
-void show_instructions(int yres)
+void show_credits(Rect *r)
 {
-    Rect r;
-    r.bot = yres - 100;
-    r.left = 10;
-    r.center = 0;
-    ggprint8b(&r, 16, 0x00ff00ff, "WASD to move");
-    ggprint8b(&r, 16, 0x00ff00ff, "Shift to boost");
-    ggprint8b(&r, 16, 0x00ff00ff, "Q to turn left");
-    ggprint8b(&r, 16, 0x00ff00ff, "E to turn right");
-    ggprint8b(&r, 16, 0x00ff00ff, "Space to shoot");
+    show_christine(r);
+    show_davalos(r);
+    show_edwin(r);
+    show_bbarrios(r);
+    show_mgarris(r);
+}
+
+void show_instructions(Rect *r)
+{
+    ggprint8b(r, 16, 0x00ff00ff, "WASD to move");
+    ggprint8b(r, 16, 0x00ff00ff, "Shift to boost");
+    ggprint8b(r, 16, 0x00ff00ff, "Q to turn left");
+    ggprint8b(r, 16, 0x00ff00ff, "E to turn right");
+    ggprint8b(r, 16, 0x00ff00ff, "Space to shoot");
 }
 
 void screenLeftText(int xres, int yres) 
@@ -42,19 +53,6 @@ void screenLeftText(int xres, int yres)
     ggprint8b(&r, 16, 0x00ffff00, "Press i for Instructions");
 
 }
-
-/*
-void screenRightText(int xres, int yres, int score)
-{
-    Rect r;
-    r.bot = yres - 20;
-    r.left = xres - 100;
-    r.center = 0;
-    ggprint8b(&r, 16, 0x00ffffff, "SCORE: %d", score); 
-    r.left = 10;
-    r.bot = yres - 60;
-}
-*/
 
 // --------------------------------------------------------------------
 // added health bar function
@@ -123,7 +121,6 @@ void heal() {
 
 }
 
-
 // -------------------------------------------------------------------
 // add menu screen to choose endless mode or boss mode before starting
 // -------------------------------------------------------------------
@@ -158,7 +155,7 @@ void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelect
     };
 
     int menuTop = yres / 2 + 30;
-    int boxWidth = 220;
+    int boxWidth = 200;
     int boxHeight = 20;
     int spacing = 30;
 
@@ -169,9 +166,10 @@ void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelect
         int boxBottom = boxTop - boxHeight;
 
         // Draw the text
-        r.bot = boxTop - 14;
+        r.bot = boxTop - (boxHeight / 2) - 6;
+        r.left = boxLeft + (boxWidth - strlen(options[i]) * 8) / 2;
         unsigned int color = (menuSelection == i) ? 0x00ff0000 : 0x00ffffff;
-        glEnable(GL_TEXTURE_2D); // re-enable if needed after drawing shapes
+        glEnable(GL_TEXTURE_2D);
         ggprint8b(&r, 16, color, options[i]);
 
         // Draw the box
@@ -188,8 +186,6 @@ void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelect
             glVertex2i(boxLeft, boxBottom);
         glEnd();
     }
-
-
 }
 
 
@@ -216,8 +212,8 @@ void drawPauseMenu(int xres, int yres, int menuSelection)
 //added function to handle main menu choices
 //--------------------------------------------------------------
 void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[], 
-        int &gameMode, bool &inMenu) {
-
+        int &gameMode, bool &inMenu) 
+{
     // handle menu navigation with keyboard input
     if (keys[XK_Up] && !prevKeys[XK_Up])
         menuSelection = (menuSelection == 0) ? 3 : menuSelection - 1;
@@ -260,7 +256,8 @@ void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[],
 // add function to handle pause menu input
 // ---------------------------------------------------------
 void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[], 
-        int &gameMode, bool &inMenu, bool &isPaused) {
+        int &gameMode, bool &inMenu, bool &isPaused) 
+{
     if (keys[XK_Up] && !prevKeys[XK_Up])
         menuSelection = (menuSelection == 0) ? 2 : menuSelection - 1;
     if (keys[XK_Down] && !prevKeys[XK_Down])

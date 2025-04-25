@@ -1603,20 +1603,17 @@ void render()
     screenLeftText(gl.xres, gl.yres);
     screenRightText(gl.xres, gl.yres, g.score); 
     if (gl.credits) {
-        extern void show_christine(Rect *r);
-        extern void show_davalos(Rect *r);
-        extern void show_edwin(Rect *r);
-        extern void show_bbarrios(Rect *r);
-        extern void show_mgarris(Rect *r);
-        show_christine(&r);
-        show_davalos(&r);
-        show_edwin(&r);
-        show_bbarrios(&r);
-        show_mgarris(&r);
+        r.bot = gl.yres - 55;
+        r.left = 10;
+        r.center = 0;
+        show_credits(&r);
     }
 
     if (gl.instructions) {
-        show_instructions(gl.yres);
+        r.bot = gl.yres - 135;
+        r.left = 10;
+        r.center = 0;
+        show_instructions(&r);
     }
 
     glEnable(GL_TEXTURE_2D);
