@@ -61,7 +61,7 @@ extern Game g;
 extern void setGameMode(Game::GameMode mode);
 
 //Enemy logic
-const int MAX_ENEMIES = 100;
+const int MAX_ENEMIES = 30;
 GLuint zorpTexture = 0;
 GLuint wiblobTexture = 0;
 
@@ -75,7 +75,6 @@ struct Enemy {
 
 Enemy zorpArmy[MAX_ENEMIES];
 Enemy wiblobArmy[MAX_ENEMIES];
-GLuint goldenEnemyTexture = 0;
 int enemySpawnTimer = 0;
 
 extern unsigned char *buildAlphaData(Image *img);
@@ -84,76 +83,69 @@ extern float shipTargetPos[2];
 void initEnemies() 
 {
     for (int i=0; i < MAX_ENEMIES; i++) {
-        //green alien army
-        zorpArmy[i].active = 0;
-        //gold alien army
-        wiblobArmy[i].active = 0;
+        enemies[i].active = 0;
+        goldenEnemies[i].active = 0;
     }
 
-    //load texture for enemies
-    
-    //green alien
-    glGenTextures(1, &zorpTexture);
-    glBindTexture(GL_TEXTURE_2D, zorpTexture);
+    //load texture for enemy once
+    glGenTextures(1, &enemyTexture);
+    glBindTexture(GL_TEXTURE_2D, enemyTexture);
 
-    Image zorpImg("./images/zorp.png");
-    printf("loaded Zorp image: %d x %d\n", zorpImg.width, zorpImg.height);
-    unsigned char *zorpData = buildAlphaData(&zorpImg);
+    Image img("./images/enemy1.png");
+    printf("loaded enemy image: %d x %d\n", img.width, img.height);
+    unsigned char *enemyData = buildAlphaData(&img);
     
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, zorpImg.width, zorpImg.height,
-             0, GL_RGBA, GL_UNSIGNED_BYTE, zorpData);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height,
+             0, GL_RGBA, GL_UNSIGNED_BYTE, enemyData);
     
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    free(zorpData);
+    free(enemyData);
 
-    //gold alien
-    glGenTextures(1, &wiblobTexture);
-    glBindTexture(GL_TEXTURE_2D, wiblobTexture);
-
-    Image wiblobImg("./images/wiblob.png");
-    unsigned char *wiblobData = buildAlphaData(&wiblobImg);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, wiblobImg.width,
-                 wiblobImg.height, 0, GL_RGBA,
-                 GL_UNSIGNED_BYTE, wiblobData);
+    //golden alien
+    glGenTextures(1, &goldenEnemyTexture);
+    glBindTexture(GL_TEXTURE_2D, goldenEnemyTexture);
+    Image goldenImg("./images/golden.png");
+    unsigned char *goldenData = buildAlphaData(&goldenImg);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, goldenImg.width,
+                 goldenImg.height, 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, goldenData);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    free(wiblobData);
+    free(goldenData);
 }
 
 void spawnEnemy()
 {
     int type = rand() % 2;
-    
-    //spawns the zorp army
+
     if( type != 1) {
         for (int i=0; i < MAX_ENEMIES; i++) {
-            if (!zorpArmy[i].active) {
-                zorpArmy[i].x = rand() % gl.xres;
-                zorpArmy[i].y = gl.yres;
-                zorpArmy[i].vx = zorpArmy[i].vy = 0.0f;
-                zorpArmy[i].ax = zorpArmy[i].ay = 0.0f;
-                zorpArmy[i].speed = 0.5f;
-                zorpArmy[i].active = true;
-                printf("spawned zorp at (%f, %f)\n",
-                        zorpArmy[i].x, zorpArmy[i].y);
+            if (!enemies[i].active) {
+                enemies[i].x = rand() % gl.xres;
+                enemies[i].y = gl.yres;
+                enemies[i].vx = enemies[i].vy = 0.0f;
+                enemies[i].ax = enemies[i].ay = 0.0f;
+                enemies[i].speed = 0.5f;
+                enemies[i].active = true;
+                printf("spawned enemy at (%f, %f)\n",
+                        enemies[i].x, enemies[i].y);
                 break;
             }
         }
     }
-    //spawns the wiblob army
     if (type == 1) {
         for (int i = 0; i < MAX_ENEMIES; i++) {
-            if (!wiblobArmy[i].active) {
-                wiblobArmy[i].x = rand() % gl.xres;
-                wiblobArmy[i].y = gl.yres + 50;
-                wiblobArmy[i].vx = wiblobArmy[i].vy = 0.0f;
-                wiblobArmy[i].ax = wiblobArmy[i].ay = 0.0f;
-                wiblobArmy[i].speed = 0.5f;
-                wiblobArmy[i].active = true;
-                printf("spawned wiblob at (%f, %f)\n",
-                        wiblobArmy[i].x, wiblobArmy[i].y);
+            if (!goldenEnemies[i].active) {
+                goldenEnemies[i].x = rand() % gl.xres;
+                goldenEnemies[i].y = gl.yres + 50;
+                goldenEnemies[i].vx = goldenEnemies[i].vy = 0.0f;
+                goldenEnemies[i].ax = goldenEnemies[i].ay = 0.0f;
+                goldenEnemies[i].speed = 0.5f;
+                goldenEnemies[i].active = true;
+                printf("spawned golden enemy at (%f, %f)\n",
+                        goldenEnemies[i].x, goldenEnemies[i].y);
                 break;
             }
         }
@@ -164,65 +156,65 @@ void spawnEnemy()
 void moveEnemiesTowardPlayer() 
 {
     for (int i=0; i < MAX_ENEMIES; i++) {
-        if (zorpArmy[i].active) {
-            float dx = shipTargetPos[0] - zorpArmy[i].x;
-            float dy = shipTargetPos[1] - zorpArmy[i].y;
+        if (enemies[i].active) {
+            float dx = shipTargetPos[0] - enemies[i].x;
+            float dy = shipTargetPos[1] - enemies[i].y;
             float dist = sqrt(dx * dx + dy * dy);
             if (dist > 0.0f) {
                 float accel = 0.25f;
                 float damping = 0.90f;
                 float maxSpeed = 1.8f;
 
-                zorpArmy[i].vx += (dx / dist) * accel;
-                zorpArmy[i].vy += (dy / dist) * accel;
+                enemies[i].vx += (dx / dist) * accel;
+                enemies[i].vy += (dy / dist) * accel;
 
                 //Velocity and Acceleration
-                zorpArmy[i].vx *= damping;
-                zorpArmy[i].vy *= damping;
+                enemies[i].vx *= damping;
+                enemies[i].vy *= damping;
                 
                 //speed cap
-                float speed = sqrt(zorpArmy[i].vx * zorpArmy[i].vx + 
-                                   zorpArmy[i].vy * zorpArmy[i].vy);
+                float speed = sqrt(enemies[i].vx * enemies[i].vx + 
+                                   enemies[i].vy * enemies[i].vy);
                 if (speed > maxSpeed) {
                     float scale = maxSpeed / speed;
-                    zorpArmy[i].vx *= scale;
-                    zorpArmy[i].vy *= scale;
+                    enemies[i].vx *= scale;
+                    enemies[i].vy *= scale;
                 }
 
-                zorpArmy[i].x += zorpArmy[i].vx;
-                zorpArmy[i].y += zorpArmy[i].vy;
+                enemies[i].x += enemies[i].vx;
+                enemies[i].y += enemies[i].vy;
 
             }
         }
-        if (wiblobArmy[i].active) {
-            float dx = shipTargetPos[0] - wiblobArmy[i].x;
-            float dy = shipTargetPos[1] - wiblobArmy[i].y;
+        if (goldenEnemies[i].active) {
+            float dx = shipTargetPos[0] - goldenEnemies[i].x;
+            float dy = shipTargetPos[1] - goldenEnemies[i].y;
             float dist = sqrt(dx * dx + dy * dy);
             if (dist > 0.0f) {
                 float accel = 0.25f;
                 float damping = 0.90f;
                 float maxSpeed = 1.8f;
 
-                wiblobArmy[i].vx += (dx / dist) * accel;
-                wiblobArmy[i].vy += (dy / dist) * accel;
+                goldenEnemies[i].vx += (dx / dist) * accel;
+                goldenEnemies[i].vy += (dy / dist) * accel;
 
                 //Velocity and Acceleration
-                wiblobArmy[i].vx *= damping;
-                wiblobArmy[i].vy *= damping;
+                goldenEnemies[i].vx *= damping;
+                goldenEnemies[i].vy *= damping;
 
                 //speed cap
-                float speed = sqrt(wiblobArmy[i].vx *
-                                    wiblobArmy[i].vx +
-                                    wiblobArmy[i].vy *
-                                    wiblobArmy[i].vy);
+                float speed = sqrt(goldenEnemies[i].vx *
+                                    goldenEnemies[i].vx +
+                                    goldenEnemies[i].vy *
+                                    goldenEnemies[i].vy);
                 if (speed > maxSpeed) {
                     float scale = maxSpeed / speed;
-                    wiblobArmy[i].vx *= scale;
-                    wiblobArmy[i].vy *= scale;
+                    goldenEnemies[i].vx *= scale;
+                    goldenEnemies[i].vy *= scale;
                 }
 
-                wiblobArmy[i].x += wiblobArmy[i].vx;
-                wiblobArmy[i].y += wiblobArmy[i].vy;
+                goldenEnemies[i].x += goldenEnemies[i].vx;
+                goldenEnemies[i].y += goldenEnemies[i].vy;
             }
         }
     }
@@ -235,12 +227,12 @@ void renderEnemies()
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBindTexture(GL_TEXTURE_2D, zorpTexture);
+    glBindTexture(GL_TEXTURE_2D, enemyTexture);
 
     for (int i=0; i<MAX_ENEMIES; i++) {
-        if (zorpArmy[i].active) {
+        if (enemies[i].active) {
             glPushMatrix();
-            glTranslatef(zorpArmy[i].x, zorpArmy[i].y, 0);
+            glTranslatef(enemies[i].x, enemies[i].y, 0);
 
             glBegin(GL_QUADS);
                 glTexCoord2f(0.0f, 1.0f); glVertex2f(-w, -h);
@@ -252,14 +244,14 @@ void renderEnemies()
         }
     }
 
-    glBindTexture(GL_TEXTURE_2D, wiblobTexture);
+    glBindTexture(GL_TEXTURE_2D, goldenEnemyTexture);
 
     for (int i=0; i<MAX_ENEMIES; i++) {
-        if (wiblobArmy[i].active) {
-            printf("Rendering wiblob at (%f, %f)\n",
-                   wiblobArmy[i].x, wiblobArmy[i].y);
+        if (goldenEnemies[i].active) {
+            printf("Rendering golden at (%f, %f)\n",
+                   goldenEnemies[i].x, goldenEnemies[i].y);
             glPushMatrix();
-            glTranslatef(wiblobArmy[i].x, wiblobArmy[i].y, 0);
+            glTranslatef(goldenEnemies[i].x, goldenEnemies[i].y, 0);
 
             glBegin(GL_QUADS);
                 glTexCoord2f(0.0f, 1.0f); glVertex2f(-w, -h);
@@ -279,7 +271,7 @@ void updateEnemySpawnTimer()
 {
    static int spawnTime = 0;
    spawnTime++;
-   if (spawnTime >= 20) {
+   if (spawnTime >= 350) {
        spawnEnemy();
        spawnTime = 0;
    }
@@ -289,25 +281,25 @@ void updateEnemySpawnTimer()
 void hitEnemy(float x, float y) 
 {
     for (int i=0; i < MAX_ENEMIES; i++) {
-        if (zorpArmy[i].active) {
-            float dx = zorpArmy[i].x - x;
-            float dy = zorpArmy[i].y - y;
+        if (enemies[i].active) {
+            float dx = enemies[i].x - x;
+            float dy = enemies[i].y - y;
             float dist = sqrt(dx*dx + dy*dy);
             if (dist < 30.0f) {
-                zorpArmy[i].active = false;
+                enemies[i].active = false;
                 break;
             }
         }
     }
     for (int i = 0; i < MAX_ENEMIES; i++) {
-        if (wiblobArmy[i].active) {
-            float dx = wiblobArmy[i].x - x;
-            float dy = wiblobArmy[i].y - y;
+        if (goldenEnemies[i].active) {
+            float dx = goldenEnemies[i].x - x;
+            float dy = goldenEnemies[i].y - y;
             float dist = sqrt(dx * dx + dy * dy);
             if (dist < 30.0f) {
-                wiblobArmy[i].active = false;
+                goldenEnemies[i].active = false;
                 printf("golden enemy hit at (%f, %f)\n",
-                       wiblobArmy[i].x, wiblobArmy[i].y);
+                       goldenEnemies[i].x, goldenEnemies[i].y);
                 break;
             }
         }
@@ -375,7 +367,7 @@ void drawIntro()
     glLoadIdentity();
 
     // Get current image
-    Image &introImg = introImages[introFrame];
+    Image &img = introImages[introFrame];
 
     // Bind texture
     GLuint introTexture;
@@ -383,8 +375,8 @@ void drawIntro()
     glBindTexture(GL_TEXTURE_2D, introTexture);
 
     glTexImage2D(GL_TEXTURE_2D, 0, 3, 
-                introImg.width, introImg.height, 0,
-                GL_RGB, GL_UNSIGNED_BYTE, introImg.data);
+                img.width, img.height, 0,
+                GL_RGB, GL_UNSIGNED_BYTE, img.data);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -404,8 +396,32 @@ void drawIntro()
 
     //debugging
     //printf("intro frame: %d, frame counter: %d\n", 
+    //introFrame, frameCounter);
 
-    //smooth transition
+    // Update frame counter
+    //frameCounter++;
+    //if (frameCounter > 1) { // Change image every 50 frames
+    //    introFrame = (introFrame + 1) % NUM_INTRO_FRAMES;
+    //    frameCounter = 0;
+    //}
+
+    // End intro after one full cycle of images
+    //if (introFrame == NUM_INTRO_FRAMES - 1 && frameCounter >= 3) {
+    //    usleep(500000);
+    //    //printf("Intro finished! Switching to Main Menu.\n");
+    //    introDone = true; // Mark the intro as complete
+    //    setGameMode(Game::MAIN_MENU); // Move to the menu
+    //    /*
+    //    // Ensure a final screen refresh happens
+    //    glClear(GL_COLOR_BUFFER_BIT);
+    //    glLoadIdentity();
+    //    glOrtho(0, gl.xres, 0, gl.yres, -1, 1);
+    //    glFlush();
+    //    */
+    //}
+
+
+    //usleep(20000); // Pause for smooth animation
     usleep(6000);
     introFrame++;
 

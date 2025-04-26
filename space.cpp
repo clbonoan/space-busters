@@ -29,6 +29,7 @@
 #include <atomic>
 #include "bbarrios.h"
 #include "eaviles.h"
+#include "davalos.h"
 
 //texture variables
 //GLuint ufoTexture;
@@ -462,18 +463,8 @@ extern void renderParticles();
 extern void addThrustParticle(float x, float y, float dx, float dy);
 //========================================
 //
-extern void drawIntro();
-extern bool introDone;
-extern void drawNebulaBackground();
-extern void initEnemies();
-extern void spawnEnemy();
-extern void moveEnemiesTowardPlayer();
-extern void renderEnemies();
-extern void updateEnemySpawnTimer();
-extern void hitEnemy(float x, float y);
-//
-//
 float shipTargetPos[2] = {0.0f, 0.0f};
+//
 //========================================
 
 //==========================================================================
@@ -1117,11 +1108,38 @@ void physics()
     g.ship.vel[0] *= 0.99f; 
     g.ship.vel[1] *= 0.99f;
 
-    //Enemy
+    //======================================================================
+    //Enemy movement and collision
     if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
         moveEnemiesTowardPlayer();
         updateEnemySpawnTimer();
+
+        for (int i=0; i < MAX_ENEMIES; i++) {
+            if (zorpArmy[i].active) {
+                float dx = zorpArmy[i].x - g.ship.pos[0];
+                float dy = zorpArmy[i].y - g.ship.pos[1];
+                float dist = sqrt(dx * dx + dy * dy);
+                    if (dist < 35.0f) {
+                        g.ship.takeDamage(0.1f);
+                        zorpArmy[i].active = false;
+                        printf("hit by Zorp! Health %2f\n", g.ship.health);
+                    }
+            }
+            if (wiblobArmy[i].active) {
+                float dx = wiblobArmy[i].x - g.ship.pos[0];
+                float dy = wiblobArmy[i].y - g.ship.pos[1];
+                float dist = sqrt(dx * dx + dy * dy);
+                    if (dist < 35.0f) {
+                        g.ship.takeDamage(0.1f);
+                        wiblobArmy[i].active = false;
+                        printf("hit by Wiblob! Health %2f\n", g.ship.health);
+                    }
+            }
+        }
+
     }
+
+    //======================================================================
 
     // keep ship within window
     if (g.ship.pos[0] < 0) g.ship.pos[0] = 0;
