@@ -97,7 +97,7 @@ void initEnemies()
     glBindTexture(GL_TEXTURE_2D, zorpTexture);
 
     Image zorpImg("./images/zorp.png");
-    printf("loaded Zorp image: %d x %d\n", zorpImg.width, zorpImg.height);
+    //printf("loaded Zorp image: %d x %d\n", zorpImg.width, zorpImg.height);
     unsigned char *zorpData = buildAlphaData(&zorpImg);
     
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, zorpImg.width, zorpImg.height,
@@ -136,8 +136,8 @@ void spawnEnemy()
                 zorpArmy[i].ax = zorpArmy[i].ay = 0.0f;
                 zorpArmy[i].speed = 0.5f;
                 zorpArmy[i].active = true;
-                printf("spawned zorp at (%f, %f)\n",
-                        zorpArmy[i].x, zorpArmy[i].y);
+                //printf("spawned zorp at (%f, %f)\n",
+                //        zorpArmy[i].x, zorpArmy[i].y);
                 break;
             }
         }
@@ -152,8 +152,8 @@ void spawnEnemy()
                 wiblobArmy[i].ax = wiblobArmy[i].ay = 0.0f;
                 wiblobArmy[i].speed = 0.5f;
                 wiblobArmy[i].active = true;
-                printf("spawned wiblob at (%f, %f)\n",
-                        wiblobArmy[i].x, wiblobArmy[i].y);
+                //printf("spawned wiblob at (%f, %f)\n",
+                //        wiblobArmy[i].x, wiblobArmy[i].y);
                 break;
             }
         }
@@ -256,8 +256,8 @@ void renderEnemies()
 
     for (int i=0; i<MAX_ENEMIES; i++) {
         if (wiblobArmy[i].active) {
-            printf("Rendering wiblob at (%f, %f)\n",
-                   wiblobArmy[i].x, wiblobArmy[i].y);
+            //printf("Rendering wiblob at (%f, %f)\n",
+            //       wiblobArmy[i].x, wiblobArmy[i].y);
             glPushMatrix();
             glTranslatef(wiblobArmy[i].x, wiblobArmy[i].y, 0);
 
@@ -283,7 +283,7 @@ void updateEnemySpawnTimer()
        spawnEnemy();
        spawnTime = 0;
    }
-   printf("Enemy timer tick: %d\n", spawnTime);
+   //printf("Enemy timer tick: %d\n", spawnTime);
 } 
 
 void hitEnemy(float x, float y) 
@@ -306,8 +306,8 @@ void hitEnemy(float x, float y)
             float dist = sqrt(dx * dx + dy * dy);
             if (dist < 30.0f) {
                 wiblobArmy[i].active = false;
-                printf("golden enemy hit at (%f, %f)\n",
-                       wiblobArmy[i].x, wiblobArmy[i].y);
+                //printf("golden enemy hit at (%f, %f)\n",
+                //       wiblobArmy[i].x, wiblobArmy[i].y);
                 break;
             }
         }
