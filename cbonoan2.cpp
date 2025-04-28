@@ -91,7 +91,7 @@ void drawHealthBar(int xres, float health)
     glEnd();
     
     //possibly make for loop to draw health bar (starting at 10 boxes for 100)
-    // draws green health bar based on current ship health
+    // draws blue health bar based on current ship health
     glColor3f(0.0f, 1.0f, 0.0f);
     glBegin(GL_QUADS);
     glVertex2f(barX, barY);
@@ -100,7 +100,6 @@ void drawHealthBar(int xres, float health)
     glVertex2f(barX, barY + healthBarHeight);
     glEnd();
 
-    
     // draws black lines to represent increments of health lost
     glColor3f(0.0f, 0.0f, 0.0f);
     float lineSpacing = healthBarWidth / 10.0f;

@@ -309,7 +309,8 @@ class Image {
 
 Image img[1] = { 
     "./images/title.png"
-    //"./images/healObject.png"
+   // "./images/healObject.png"
+    //"./images/background.png",
     //"./images/stardust-health.png"
 };
 
@@ -481,6 +482,7 @@ int main()
     logOpen();
     init_opengl();
     initEnemies();
+    initStar();
     srand(time(NULL));
     clock_gettime(CLOCK_REALTIME, &timePause);
     clock_gettime(CLOCK_REALTIME, &timeStart);
@@ -1120,6 +1122,7 @@ void physics()
     if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
         moveEnemiesTowardPlayer();
         updateEnemySpawnTimer();
+        updateStarSpawnTimer();
 
         for (int i=0; i < MAX_ENEMIES; i++) {
             if (zorpArmy[i].active) {
@@ -1143,7 +1146,20 @@ void physics()
                     }
             }
         }
-    }
+        
+        for( int i=0; i < HealthPack; i++) {
+            if(HealObject[i].active) {
+                float dx = HealObject[i].x - g.ship.pos[0];
+                float dy = HealObject[i].y - g.ship.pos[1];
+                float dist = sqrt(dx * dx + dy * dy);
+                    if (dist < 35.0f) {
+                        g.ship.heal(0.1f);
+                        HealObject[i].active = false;
+                    }
+        
+            }
+        }
+}
 
     //======================================================================
 
@@ -1406,6 +1422,9 @@ void drawUFO(float x, float y, GLuint texture) {
     glPopMatrix();
 }
 
+
+
+
 void cleanupTextures() {
     glDeleteTextures(1, &g.ufoTexture);
     glDeleteTextures(3, shipTextures);
@@ -1421,12 +1440,15 @@ void render()
     if (g.gameMode == Game::ENDLESS_MODE) {
         drawNebulaBackground(); // replaces gl.backgroundTexture
         updateEnemySpawnTimer();
+        updateStarSpawnTimer();
         moveEnemiesTowardPlayer();
         renderEnemies();
     } else if (g.gameMode == Game::BOSS_MODE) {
         drawNebulaBackground();
         moveBossesTowardPlayer();
         renderBosses();
+        renderHeal();
+
     } else if (gl.background) {
         glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
         glBegin(GL_QUADS);
