@@ -43,7 +43,7 @@ void show_instructions(Rect *r)
     ggprint8b(r, 16, 0x00ff00ff, "Space to shoot");
 }
 
-void screenLeftText(int xres, int yres) 
+void screenLeftText(int yres) 
 {
     Rect r;
     r.bot = yres - 20;
@@ -59,6 +59,8 @@ void screenLeftText(int xres, int yres)
 // --------------------------------------------------------------------
 void drawHealthBar(int xres, float health)
 {
+    // debug
+    printf("drawHealthBar: %f\n", health); 
     if (health > 1.0f)
         health = 1.0f;
     if (health < 0.0f)
@@ -79,7 +81,6 @@ void drawHealthBar(int xres, float health)
     //debug
     //printf("health: %f\n", g.ship.health);
     
-    /*
     // draws red health background bar
     glColor3f(1.0f, 0.0f, 0.0f);    
     glBegin(GL_QUADS);
@@ -88,11 +89,10 @@ void drawHealthBar(int xres, float health)
     glVertex2f(barX + healthBarWidth, barY + healthBarHeight);
     glVertex2f(barX, barY + healthBarHeight);
     glEnd();
-    */
     
     //possibly make for loop to draw health bar (starting at 10 boxes for 100)
-    // draws blue health bar based on current ship health
-    glColor3f(1.0f, 0.0f, 0.0f);
+    // draws green health bar based on current ship health
+    glColor3f(0.0f, 1.0f, 0.0f);
     glBegin(GL_QUADS);
     glVertex2f(barX, barY);
     glVertex2f(barX + (healthBarWidth * health), barY);
@@ -100,6 +100,7 @@ void drawHealthBar(int xres, float health)
     glVertex2f(barX, barY + healthBarHeight);
     glEnd();
 
+    
     // draws black lines to represent increments of health lost
     glColor3f(0.0f, 0.0f, 0.0f);
     float lineSpacing = healthBarWidth / 10.0f;
@@ -112,14 +113,6 @@ void drawHealthBar(int xres, float health)
     }
 }
 
-void takeDamage() {
-    
-
-}
-
-void heal() {
-
-}
 
 // -------------------------------------------------------------------
 // add menu screen to choose endless mode or boss mode before starting
@@ -286,3 +279,7 @@ void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[],
     }
 }
 
+//void renderHealthDrop() 
+//{
+
+//}

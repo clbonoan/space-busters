@@ -123,17 +123,23 @@ class Ship {
             color[0] = color[1] = color[2] = 1.0;
             health = 1.0; 
         }
-        void takeDamage(int damage) {
+        void takeDamage(float damage) {
             health -= damage;
             if (health < 0)
                 health = 0;
         }
-        void heal(int amount) {
+        void heal(float amount) {
             health += amount;
             if (health > 1.0)
                 health = 1.0;
         }
+        float getHealth() { return health; }
 };
+
+// Ship ship;
+// ship.takeDamage(10);
+// ship.health;
+// ship.getHealth();
 
 class Bullet {
     public:
@@ -303,7 +309,7 @@ class Image {
 
 Image img[1] = { 
     "./images/title.png"
-    //"./images/background.png",
+    //"./images/healObject.png"
     //"./images/stardust-health.png"
 };
 
@@ -636,6 +642,7 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 glTexImage2D(GL_TEXTURE_2D, 0, 3, img[0].width, img[0].height, 0,
              GL_RGB, GL_UNSIGNED_BYTE, img[0].data);
+
 
 // Load background texture
 //glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
@@ -1136,7 +1143,6 @@ void physics()
                     }
             }
         }
-
     }
 
     //======================================================================
@@ -1146,7 +1152,6 @@ void physics()
     if (g.ship.pos[0] > gl.xres) g.ship.pos[0] = gl.xres;
     if (g.ship.pos[1] < 0) g.ship.pos[1] = 0;
     if (g.ship.pos[1] > gl.yres) g.ship.pos[1] = gl.yres;
-
 
     //Update asteroid positions
     /*
@@ -1622,7 +1627,7 @@ void render()
         glEnd();
     }
     drawHealthBar(gl.xres, g.ship.health);
-    screenLeftText(gl.xres, gl.yres);
+    screenLeftText(gl.yres);
     screenRightText(gl.xres, gl.yres, g.score); 
     if (gl.credits) {
         r.bot = gl.yres - 55;
