@@ -73,10 +73,26 @@ struct Enemy {
     bool active;
 };
 
+const int MAX_BOSSES = 5;
+
+struct Boss {
+    float x, y;
+    float vx, vy;
+    float ax, ay;
+    float speed;
+    int health;
+    bool active;
+}; 
+
+
 Enemy zorpArmy[MAX_ENEMIES];
 Enemy wiblobArmy[MAX_ENEMIES];
 GLuint goldenEnemyTexture = 0;
 int enemySpawnTimer = 0;
+
+Boss bosses[5];
+GLuint bossTexture;
+int currentBoss = 0;
 
 extern unsigned char *buildAlphaData(Image *img);
 extern float shipTargetPos[2];
@@ -120,6 +136,32 @@ void initEnemies()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     free(wiblobData);
+    
+    //cipher boss
+    glGenTextures(1, &bossTexture);
+    glBindTexture(GL_TEXTURE_2D, bossTexture);
+
+    Image bossImg("./images/cipher.png");
+
+    unsigned char *bossData = buildAlphaData(&bossImg);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bossImg.width, bossImg.height,
+                0, GL_RGBA, GL_UNSIGNED_BYTE, bossData);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    free(bossData); // free after glTexImage2D!
+
+    //initialize first boss
+    bosses[0].x = gl.xres / 2;
+    bosses[0].y = gl.yres;
+    bosses[0].vx = bosses[0].vy = 0.0f;
+    bosses[0].ax = bosses[0].ay = 0.0f;
+    bosses[0].speed = 6.0f;
+    bosses[0].health = 250;
+    bosses[0].active = true;
+
 }
 
 void spawnEnemy()
@@ -228,6 +270,40 @@ void moveEnemiesTowardPlayer()
     }
 }
 
+void moveBossesTowardPlayer()
+{
+    for (int i = 0; i < 5; i++) {
+        if (bosses[i].active) {
+            float dx = shipTargetPos[0] - bosses[i].x;
+            float dy = shipTargetPos[1] - bosses[i].y;
+            float dist = sqrt(dx * dx + dy * dy);
+            if (dist > 0.0f) {
+                float accel = 4.0f;
+                float damping = 0.88f;
+                float maxSpeed = 10.0f;
+                
+                float randomJitterX = (rand() % 100 - 50) * 0.02f;
+                float randomJitterY = (rand() % 100 - 50) * 0.02f;
+
+                bosses[i].vx += (dx / dist) * accel + randomJitterX;
+                bosses[i].vy += (dy / dist) * accel + randomJitterY;
+                bosses[i].vx *= damping;
+                bosses[i].vy *= damping;
+                float speed = sqrt(bosses[i].vx * bosses[i].vx
+                                   + bosses[i].vy * bosses[i].vy);
+                if (speed > maxSpeed) {
+                    float scale = maxSpeed / speed;
+                    bosses[i].vx *= scale;
+                    bosses[i].vy *= scale;
+                }
+                bosses[i].x += bosses[i].vx;
+                bosses[i].y += bosses[i].vy;
+            }
+        }
+    }
+}
+
+
 void renderEnemies()
 {
     float w = 32.0f, h = 32.0f;
@@ -275,6 +351,35 @@ void renderEnemies()
     glDisable(GL_TEXTURE_2D);
 }
 
+void renderBosses()
+{
+    float w = 128.0f, h = 128.0f; // bosses are bigger
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBindTexture(GL_TEXTURE_2D, bossTexture);
+
+    for (int i=0; i<5; i++) {
+        if (bosses[i].active) {
+            glPushMatrix();
+            glTranslatef(bosses[i].x, bosses[i].y, 0);
+
+            glBegin(GL_QUADS);
+                glTexCoord2f(0.0f, 1.0f); glVertex2f(-w, -h);
+                glTexCoord2f(0.0f, 0.0f); glVertex2f(-w, h);
+                glTexCoord2f(1.0f, 0.0f); glVertex2f(w, h);
+                glTexCoord2f(1.0f, 1.0f); glVertex2f(w, -h);
+            glEnd();
+            glPopMatrix();
+        }
+    }
+
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+}
+
+
 void updateEnemySpawnTimer() 
 {
    static int spawnTime = 0;
@@ -308,6 +413,25 @@ void hitEnemy(float x, float y)
                 wiblobArmy[i].active = false;
                 printf("golden enemy hit at (%f, %f)\n",
                        wiblobArmy[i].x, wiblobArmy[i].y);
+                break;
+            }
+        }
+    }
+
+    //bosses
+    for (int i=0; i<5; i++) {
+        if (bosses[i].active) {
+            float dx = bosses[i].x - x;
+            float dy = bosses[i].y - y;
+            float dist = sqrt(dx * dx + dy * dy);
+            if (dist < 40.0f) { // bigger hitbox
+                bosses[i].health--;
+                printf("Hit Cipher! Health left: %d\n", bosses[i].health);
+                if (bosses[i].health <= 0) {
+                    bosses[i].active = false;
+                    printf("Boss defeated!\n");
+                    // (spawn next boss later)
+                }
                 break;
             }
         }

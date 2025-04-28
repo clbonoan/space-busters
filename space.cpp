@@ -1413,11 +1413,15 @@ void render()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
+    if (g.gameMode == Game::ENDLESS_MODE) {
         drawNebulaBackground(); // replaces gl.backgroundTexture
         updateEnemySpawnTimer();
         moveEnemiesTowardPlayer();
         renderEnemies();
+    } else if (g.gameMode == Game::BOSS_MODE) {
+        drawNebulaBackground();
+        moveBossesTowardPlayer();
+        renderBosses();
     } else if (gl.background) {
         glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
         glBegin(GL_QUADS);
