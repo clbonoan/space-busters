@@ -1443,6 +1443,7 @@ void render()
         updateStarSpawnTimer();
         moveEnemiesTowardPlayer();
         renderEnemies();
+        renderHeal();
     } else if (g.gameMode == Game::BOSS_MODE) {
         drawNebulaBackground();
         moveBossesTowardPlayer();
