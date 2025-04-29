@@ -505,6 +505,21 @@ int main()
             physics();
             physicsCountdown -= physicsRate;
         }
+        
+        //theme music
+        static bool themeMusic = false;
+        if (g.inMenu) {
+            if (!themeMusic) {
+                playThemeMusic();
+                themeMusic = true;
+            }
+        } else {
+            if (themeMusic) {
+                stopThemeMusic();
+                themeMusic = false;
+            }
+        }
+    
         render();
         if (!introDone) {
             drawIntro();
@@ -1046,7 +1061,10 @@ void physics()
         //Enemy
         if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
            hitEnemy(b->pos[0], b->pos[1]);
-        } 
+	   
+	   //play enemy explodes sound
+	   playEnemyDieSound();
+	} 
 
         // bounce the bullets/ kill the bullet
         if (b->pos[0] < 0.0f) {
@@ -1639,5 +1657,6 @@ void render()
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 }
+
 
 
