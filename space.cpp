@@ -123,17 +123,23 @@ class Ship {
             color[0] = color[1] = color[2] = 1.0;
             health = 1.0; 
         }
-        void takeDamage(int damage) {
+        void takeDamage(float damage) {
             health -= damage;
             if (health < 0)
                 health = 0;
         }
-        void heal(int amount) {
+        void heal(float amount) {
             health += amount;
             if (health > 1.0)
                 health = 1.0;
         }
+        float getHealth() { return health; }
 };
+
+// Ship ship;
+// ship.takeDamage(10);
+// ship.health;
+// ship.getHealth();
 
 class Bullet {
     public:
@@ -303,6 +309,7 @@ class Image {
 
 Image img[1] = { 
     "./images/title.png"
+   // "./images/healObject.png"
     //"./images/background.png",
     //"./images/stardust-health.png"
 };
@@ -475,6 +482,7 @@ int main()
     logOpen();
     init_opengl();
     initEnemies();
+    initStar();
     srand(time(NULL));
     clock_gettime(CLOCK_REALTIME, &timePause);
     clock_gettime(CLOCK_REALTIME, &timeStart);
@@ -651,6 +659,7 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 glTexImage2D(GL_TEXTURE_2D, 0, 3, img[0].width, img[0].height, 0,
              GL_RGB, GL_UNSIGNED_BYTE, img[0].data);
+
 
 // Load background texture
 //glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
@@ -1131,6 +1140,7 @@ void physics()
     if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
         moveEnemiesTowardPlayer();
         updateEnemySpawnTimer();
+        updateStarSpawnTimer();
 
         for (int i=0; i < MAX_ENEMIES; i++) {
             if (zorpArmy[i].active) {
@@ -1154,8 +1164,20 @@ void physics()
                     }
             }
         }
-
-    }
+        
+        for( int i=0; i < HealthPack; i++) {
+            if(HealObject[i].active) {
+                float dx = HealObject[i].x - g.ship.pos[0];
+                float dy = HealObject[i].y - g.ship.pos[1];
+                float dist = sqrt(dx * dx + dy * dy);
+                    if (dist < 35.0f) {
+                        g.ship.heal(0.1f);
+                        HealObject[i].active = false;
+                    }
+        
+            }
+        }
+}
 
     //======================================================================
 
@@ -1164,7 +1186,6 @@ void physics()
     if (g.ship.pos[0] > gl.xres) g.ship.pos[0] = gl.xres;
     if (g.ship.pos[1] < 0) g.ship.pos[1] = 0;
     if (g.ship.pos[1] > gl.yres) g.ship.pos[1] = gl.yres;
-
 
     //Update asteroid positions
     /*
@@ -1419,6 +1440,9 @@ void drawUFO(float x, float y, GLuint texture) {
     glPopMatrix();
 }
 
+
+
+
 void cleanupTextures() {
     glDeleteTextures(1, &g.ufoTexture);
     glDeleteTextures(3, shipTextures);
@@ -1431,11 +1455,19 @@ void render()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
+    if (g.gameMode == Game::ENDLESS_MODE) {
         drawNebulaBackground(); // replaces gl.backgroundTexture
         updateEnemySpawnTimer();
+        updateStarSpawnTimer();
         moveEnemiesTowardPlayer();
         renderEnemies();
+        renderHeal();
+    } else if (g.gameMode == Game::BOSS_MODE) {
+        drawNebulaBackground();
+        moveBossesTowardPlayer();
+        renderBosses();
+        renderHeal();
+
     } else if (gl.background) {
         glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
         glBegin(GL_QUADS);
@@ -1636,7 +1668,7 @@ void render()
         glEnd();
     }
     drawHealthBar(gl.xres, g.ship.health);
-    screenLeftText(gl.xres, gl.yres);
+    screenLeftText(gl.yres);
     screenRightText(gl.xres, gl.yres, g.score); 
     if (gl.credits) {
         r.bot = gl.yres - 55;

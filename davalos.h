@@ -21,6 +21,11 @@ extern Enemy wiblobArmy[MAX_ENEMIES];
 extern GLuint zorpTexture;
 extern GLuint wiblobTexture;
 
+//boss
+void moveBossesTowardPlayer();
+void renderBosses();
+
+
 // function declarations
 void initEnemies();
 void spawnEnemy();
