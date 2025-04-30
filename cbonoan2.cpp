@@ -16,6 +16,7 @@ extern void show_davalos(Rect *r);
 extern void show_edwin(Rect *r);
 extern void show_bbarrios(Rect *r);
 extern void show_mgarris(Rect *r);
+extern void restartGame();
 
 using namespace std;
 
@@ -51,7 +52,6 @@ void screenLeftText(int yres)
     r.center = 0;
     ggprint8b(&r, 16, 0x00ffff00, "Press c for Credits");
     ggprint8b(&r, 16, 0x00ffff00, "Press i for Instructions");
-
 }
 
 // --------------------------------------------------------------------
@@ -60,7 +60,9 @@ void screenLeftText(int yres)
 void drawHealthBar(int xres, float health)
 {
     // debug
-    printf("drawHealthBar: %f\n", health); 
+    //printf("drawHealthBar: %f\n", health); 
+   
+    // set caps/bounds for health 
     if (health > 1.0f)
         health = 1.0f;
     if (health < 0.0f)
@@ -69,8 +71,8 @@ void drawHealthBar(int xres, float health)
     // position for health bar at bottom right corner
     float healthBarWidth = 200.0f;
     float healthBarHeight = 15.0f;
-    float barX = xres - healthBarWidth - 20;     // shows 10px from the right
-    float barY = 10;    // shows 10px from the bottom
+    float barX = xres - healthBarWidth - 20;     
+    float barY = 10;    
 
     Rect r;
     r.bot = barY + healthBarHeight + 5;
@@ -78,9 +80,6 @@ void drawHealthBar(int xres, float health)
     r.center = 0;
     ggprint8b(&r, 16, 0x00ffff00, "HEALTH");
 
-    //debug
-    //printf("health: %f\n", g.ship.health);
-    
     // draws red health background bar
     glColor3f(1.0f, 0.0f, 0.0f);    
     glBegin(GL_QUADS);
@@ -90,7 +89,6 @@ void drawHealthBar(int xres, float health)
     glVertex2f(barX, barY + healthBarHeight);
     glEnd();
     
-    //possibly make for loop to draw health bar (starting at 10 boxes for 100)
     // draws blue health bar based on current ship health
     glColor3f(0.0f, 1.0f, 0.0f);
     glBegin(GL_QUADS);
@@ -112,11 +110,11 @@ void drawHealthBar(int xres, float health)
     }
 }
 
-
 // -------------------------------------------------------------------
 // add menu screen to choose endless mode or boss mode before starting
 // -------------------------------------------------------------------
-void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelection)
+void drawMenu(int title, int xres, int yres, GLuint titleTexture, 
+        int menuSelection)
 {
     Rect r;
     glClear(GL_COLOR_BUFFER_BIT);
@@ -131,55 +129,73 @@ void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelect
         int titleyStart = yres - titleHeight - 200;
         int titleyEnd = yres - 200;
         glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, 1.0f); glVertex2i(titlexStart, titleyStart);
-            glTexCoord2f(0.0f, 0.0f); glVertex2i(titlexStart, titleyEnd);
-            glTexCoord2f(1.0f, 0.0f); glVertex2i(titlexEnd, titleyEnd);
-            glTexCoord2f(1.0f, 1.0f); glVertex2i(titlexEnd, titleyStart);
+            glTexCoord2f(0.0f, 1.0f); 
+            glVertex2i(titlexStart, titleyStart);
+            glTexCoord2f(0.0f, 0.0f); 
+            glVertex2i(titlexStart, titleyEnd);
+            glTexCoord2f(1.0f, 0.0f); 
+            glVertex2i(titlexEnd, titleyEnd);
+            glTexCoord2f(1.0f, 1.0f); 
+            glVertex2i(titlexEnd, titleyStart);
         glEnd();
     }
 
-    r.left = xres / 2 - 100;
-    r.center = 0;
+    r.bot = yres / 2 + 20;
+    r.left = xres / 2;
+    r.center = 1;
 
     const int numOptions = 4;
     const char* options[numOptions] = {
-        "Endless Mode", "Boss Mode", "Ship Selection", "Exit"
+        "Endless Mode", "Boss Mode", "Choose Ship", "Exit"
     };
-
-    int menuTop = yres / 2 + 30;
-    int boxWidth = 200;
-    int boxHeight = 20;
-    int spacing = 30;
-
+    
     for (int i = 0; i < numOptions; i++) {
-        int boxLeft = xres / 2 - boxWidth / 2;
-        int boxRight = boxLeft + boxWidth;
-        int boxTop = menuTop - i * spacing;
-        int boxBottom = boxTop - boxHeight;
-
-        // Draw the text
-        r.bot = boxTop - (boxHeight / 2) - 6;
-        r.left = boxLeft + (boxWidth - strlen(options[i]) * 8) / 2;
-        unsigned int color = (menuSelection == i) ? 0x00ff0000 : 0x00ffffff;
-        glEnable(GL_TEXTURE_2D);
-        ggprint8b(&r, 16, color, options[i]);
-
-        // Draw the box
-        glDisable(GL_TEXTURE_2D);
-        if (menuSelection == i)
-            glColor3f(1.0f, 0.0f, 0.0f); // red box for selected
-        else
-            glColor3f(0.5f, 0.0f, 0.5f); // white box
-
-        glBegin(GL_LINE_LOOP);
-            glVertex2i(boxLeft, boxTop);
-            glVertex2i(boxRight, boxTop);
-            glVertex2i(boxRight, boxBottom);
-            glVertex2i(boxLeft, boxBottom);
-        glEnd();
+        ggprint16(&r, 32, (menuSelection == i) ? 0x00ff0000 : 0x00ffffff,
+                options[i]);
     }
 }
 
+void drawGameOver(int gameOver, int xres, int yres, GLuint gameOverTexture,
+        int menuSelection)
+{
+   Rect r;
+   glClear(GL_COLOR_BUFFER_BIT);
+
+   if (gameOver) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, gameOverTexture);
+        int gameOverWidth = 775;
+        int gameOverHeight = 77;
+        int gameOverXStart = (xres - gameOverWidth) / 2;
+        int gameOverXEnd = gameOverXStart + gameOverWidth;
+        int gameOverYStart = yres - gameOverHeight - 200;
+        int gameOverYEnd = yres - 200;
+        glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 1.0f);
+            glVertex2i(gameOverXStart, gameOverYStart);
+            glTexCoord2f(0.0f, 0.0f);
+            glVertex2i(gameOverXStart, gameOverYEnd);
+            glTexCoord2f(1.0f, 0.0f);
+            glVertex2i(gameOverXEnd, gameOverYEnd);
+            glTexCoord2f(1.0f, 1.0f);
+            glVertex2i(gameOverXEnd, gameOverYStart);
+        glEnd();
+   }
+
+   r.left = xres / 2;
+   r.bot = yres / 2 + 20;
+   r.center = 1;
+   glEnable(GL_TEXTURE_2D);
+
+   // options
+   ggprint16(&r, 32, (menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, 
+           "Restart");
+   ggprint16(&r, 32, (menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, 
+           "Return to Main Menu");
+   ggprint16(&r, 32, (menuSelection == 2) ? 0x00ff0000 : 0x00ffffff,
+           "Exit");
+
+}
 
 //-----------------------------------------------------------------
 // add pause menu
@@ -188,14 +204,18 @@ void drawPauseMenu(int xres, int yres, int menuSelection)
 {
     // draw "resume", "main menu", and "exit" options
     Rect r;
-    r.bot = yres / 2;
-    r.left = xres / 2 - 100;
-    r.center = 0;
+    r.bot = yres / 2 + 40;
+    r.left = xres / 2;
+    r.center = 1;
+    glEnable(GL_TEXTURE_2D);
 
-    ggprint8b(&r, 24, 0x00ffff00, "Pause Menu");
-    ggprint8b(&r, 16, (menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, "Resume");
-    ggprint8b(&r, 16, (menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, "Return to Main Menu");
-    ggprint8b(&r, 16, (menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, "Exit");
+    ggprint16(&r, 32, 0x00ffff00, "Pause Menu");
+    ggprint16(&r, 24, (menuSelection == 0) ? 0x00ff0000 : 0x00ffffff, 
+            "Resume");
+    ggprint16(&r, 24, (menuSelection == 1) ? 0x00ff0000 : 0x00ffffff, 
+            "Return to Main Menu");
+    ggprint16(&r, 24, (menuSelection == 2) ? 0x00ff0000 : 0x00ffffff, 
+            "Exit");
 
 }
 
@@ -210,7 +230,7 @@ void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[],
     if (keys[XK_Up] && !prevKeys[XK_Up])
         menuSelection = (menuSelection == 0) ? 3 : menuSelection - 1;
     if (keys[XK_Down] && !prevKeys[XK_Down])
-        menuSelection = (menuSelection == 3) ? 3 : menuSelection + 1;
+        menuSelection = (menuSelection == 3) ? 0 : menuSelection + 1;
     //g.menuSelection ^= 1;   //XOR to toggle between 0 and 1
 
     // update prevKeys; prevents multiple presses per key press
@@ -260,16 +280,17 @@ void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[],
 
     // selecting option
     if (keys[XK_Return]) {
-        isPaused = false;
+        //isPaused = false;
+        isPaused = true;
         switch (menuSelection) {
             case 0: // resume
                 isPaused = false;
+                gameMode = gameMode;
                 break;
             case 1: // go to main menu
                 inMenu = true;
                 isPaused = false;
                 gameMode = 1;
-                //gameMode = Game::MAIN_MENU;
                 break;
             case 2: // exit game
                 exit(0);
@@ -278,7 +299,33 @@ void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[],
     }
 }
 
-//void renderHealthDrop() 
-//{
+// add function to handle game over menu input
+void handleGameOverInput(char keys[], int &menuSelection, bool prevKeys[],
+        int &gameMode, bool &inMenu, bool &isPaused, bool &isEnd)
+{
+    if (keys[XK_Up] && !prevKeys[XK_Up])
+        menuSelection = (menuSelection == 0) ? 2 : menuSelection - 1;
+    if (keys[XK_Down] && !prevKeys[XK_Down])
+        menuSelection = (menuSelection == 2) ? 0 : menuSelection + 1;
 
-//}
+    memcpy(prevKeys, keys, 65536);
+
+    if (keys[XK_Return]) {
+        switch (menuSelection) {
+            case 0: // restart
+                restartGame();
+                gameMode = gameMode; //this goes only to endless mode for now
+                isEnd = false;
+                break; 
+            case 1: // go to main menu
+                inMenu = true;
+                isPaused = false;
+                isEnd = false;
+                gameMode = 0;
+                break;
+            case 2: // exit game
+                exit(0);
+                break;
+        }
+    }
+}

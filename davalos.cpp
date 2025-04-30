@@ -28,6 +28,7 @@ class Global {
 class Ship {
 public:
     float pos[3];  // Only need pos to follow player
+    int score;
 };
 
 class Game {
@@ -391,6 +392,7 @@ void updateEnemySpawnTimer()
    //printf("Enemy timer tick: %d\n", spawnTime);
 } 
 
+// collision between bullet and enemy
 void hitEnemy(float x, float y) 
 {
     for (int i=0; i < MAX_ENEMIES; i++) {
@@ -426,6 +428,7 @@ void hitEnemy(float x, float y)
             float dist = sqrt(dx * dx + dy * dy);
             if (dist < 40.0f) { // bigger hitbox
                 bosses[i].health--;
+                //printf("Player's score: %d\n", g.score);
                 printf("Hit Cipher! Health left: %d\n", bosses[i].health);
                 if (bosses[i].health <= 0) {
                     bosses[i].active = false;

@@ -18,13 +18,17 @@ extern Game g;
 void show_christine(Rect *r);
 void show_credits(Rect *r);
 void drawHealthBar(int xres, float health);
-void drawMenu(int title, int xres, int yres, GLuint titleTexture, int menuSelection);
+void drawMenu(int title, int xres, int yres, GLuint titleTexture, 
+        int menuSelection);
+void drawGameOver(int title, int xres, int yres, GLuint gameOverTexture,
+        int menuSelection);
 void drawPauseMenu(int xres, int yres, int menuSelection);
-//void handleMainMenuInput();
 void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[], 
         int &gameMode, bool &inMenu);
 void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[], 
         int &gameMode, bool &inMenu, bool &isPaused);
+void handleGameOverInput(char keys[], int &menuSelection, bool prevKeys[],
+        int &gameMode, bool &inMenu, bool &isPaused, bool &isEnd);
 void screenLeftText(int yres);
 //void screenRightText(int xres, int yres, int score);
 void show_instructions(Rect *r);

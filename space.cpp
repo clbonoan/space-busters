@@ -86,8 +86,12 @@ class Global {
         int instructions;
         GLuint titleTexture;
         GLuint backgroundTexture;
+        GLuint pauseTexture;
+        GLuint gameOverTexture;
         int title;
         int background;
+        int pause;
+        int gameOver;
         atomic<float> polledMouseX{0};
         atomic<float> polledMouseY{0};
         Global() {
@@ -99,6 +103,7 @@ class Global {
             instructions = 0;
             title = 1;
             background = 1;
+            gameOver = 0;
         }
 } gl;
 
@@ -121,7 +126,7 @@ class Ship {
             VecZero(acc);
             angle = 0.0;
             color[0] = color[1] = color[2] = 1.0;
-            health = 1.0; 
+            health = 1.0;
         }
         void takeDamage(float damage) {
             health -= damage;
@@ -133,13 +138,8 @@ class Ship {
             if (health > 1.0)
                 health = 1.0;
         }
-        float getHealth() { return health; }
+        //float getHealth() { return health; }
 };
-
-// Ship ship;
-// ship.takeDamage(10);
-// ship.health;
-// ship.getHealth();
 
 class Bullet {
     public:
@@ -151,27 +151,6 @@ class Bullet {
         Bullet() { }
 };
 
-/*
-class Asteroid {
-    public:
-        Vec pos;
-        Vec vel;
-        int nverts;
-        Flt radius;
-        Vec vert[8];
-        float angle;
-        float rotate;
-        float color[3];
-        struct Asteroid *prev;
-        struct Asteroid *next;
-    public:
-        Asteroid() {
-            prev = NULL;
-            next = NULL;
-        }
-};
-*/
-
 class Game {
     public:
         int ufo;
@@ -180,10 +159,7 @@ class Game {
         GLuint ufoTexture;
         Vec pos;
         Ship ship;
-        //Asteroid *ahead;
         Bullet *barr;
-        int showStardust;
-        //int nasteroids;
         int nbullets;
         int nenemies;
         struct timespec bulletTimer;
@@ -200,15 +176,13 @@ class Game {
         bool inMenu;
         int menuSelection;
         bool isPaused;
+        bool isEnd;
         bool prevKeys[65536];
-
+        int lastGameMode;
     public:
         Game() {
             ufo = 1;
-            showStardust = 0;
-            //ahead = NULL;
             barr = new Bullet[MAX_BULLETS];
-            //nasteroids = 0;
             nbullets = 0;
             nenemies = 0;
             mouseThrustOn = false;
@@ -216,42 +190,10 @@ class Game {
             gameMode = MAIN_MENU;
             menuSelection = 0;
             isPaused = false;
+            isEnd = false;
             score = 0;
+            lastGameMode = MAIN_MENU;
             memset(prevKeys, 0, sizeof(prevKeys));
-            
-            /*
-            for (int j=0; j<8; j++) {
-                Asteroid *a = new Asteroid;
-                a->nverts = 8;
-                a->radius = (rnd()*80.0 + 40.0);
-                Flt angle = 0.0f;
-                Flt inc = (PI * 2.0) / (Flt)a->nverts;
-                for (int i=0; i<a->nverts; i++) {
-                    a->vert[i][0] = sin(angle) * a->radius;
-                    a->vert[i][1] = cos(angle) * a->radius;
-                    angle += inc;
-                }
-                a->pos[0] = (Flt)(rand() % gl.xres);
-                a->pos[1] = (Flt)(rand() % gl.yres);
-                a->pos[2] = 0.0f;
-                a->angle = 0.0;
-                a->rotate = rnd() * 4.0 - 2.0;
-                //a->color[0] = 0.8;
-                //a->color[1] = 0.8;
-                //a->color[2] = 0.7;
-                a->color[0] = rnd();
-                a->color[1] = rnd();
-                a->color[2] = rnd();
-                a->vel[0] = (Flt)(rnd()*2.0-1.0);
-                a->vel[1] = (Flt)(rnd()*2.0-1.0);
-                a->next = ahead;
-                if (ahead != NULL)
-                    ahead->prev = a;
-                ahead = a;
-                ++nasteroids;
-            }
-            */
-
             clock_gettime(CLOCK_REALTIME, &bulletTimer);
         }
 
@@ -307,11 +249,9 @@ class Image {
         }   
 };
 
-Image img[1] = { 
-    "./images/title.png"
-   // "./images/healObject.png"
-    //"./images/background.png",
-    //"./images/stardust-health.png"
+Image img[2] = { 
+    "./images/title.png",
+    "./images/gameover.png"
 };
 
 //X Windows variables
@@ -356,7 +296,7 @@ class X11_wrapper {
             Colormap cmap = XCreateColormap(dpy, root, vi->visual, AllocNone);
             swa.colormap = cmap;
             swa.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
-                PointerMotionMask | ButtonPressMask | ButtonReleaseMask |
+              PointerMotionMask | ButtonPressMask | ButtonReleaseMask |
                 StructureNotifyMask | SubstructureNotifyMask;
             unsigned int winops = CWBorderPixel|CWColormap|CWEventMask;
             if (fullscreen) {
@@ -456,9 +396,6 @@ void physics();
 void render();
 void drawHealthBar(float health);
 void renderMenu();
-//void drawMenu();
-//void handleMainMenuInput();
-//void handlePauseMenuInput();
 void drawPauseMenu();
 void cleanupTextures();
 void* mousePollThread(void* arg);
@@ -567,22 +504,6 @@ unsigned char *buildAlphaData(Image *img)
 
         *(ptr + 3) = clear;
 
-        //-----------------------------------------------
-        //get largest color component...
-        //*(ptr+3) = (unsigned char)((
-        //      (int)*(ptr+0) +
-        //      (int)*(ptr+1) +
-        //      (int)*(ptr+2)) / 3);
-        //d = a;
-        //if (b >= a && b >= c) d = b;
-        //if (c >= a && c >= b) d = c;
-        //*(ptr+3) = d;
-        //-----------------------------------------------
-        //this code optimizes the commented code above.
-        //code contributed by student: Chris Smith
-        //
-        //*(ptr+3) = (a|b|c);
-        //-----------------------------------------------
         ptr += 4;
         data += 3;
     }
@@ -634,9 +555,7 @@ for (int i = 0; i < 3; i++) {
 
 // Load other textures
 glGenTextures(1, &gl.titleTexture);
-//glGenTextures(1, &gl.backgroundTexture);
-//glGenTextures(1, &gl.ufoTexture);
-//glGenTextures(1, &g.stardustTexture);
+glGenTextures(1, &gl.gameOverTexture);
 
 // Load title texture
 glBindTexture(GL_TEXTURE_2D, gl.titleTexture);
@@ -645,22 +564,15 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 glTexImage2D(GL_TEXTURE_2D, 0, 3, img[0].width, img[0].height, 0,
              GL_RGB, GL_UNSIGNED_BYTE, img[0].data);
 
-
-// Load background texture
-//glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
-//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//glTexImage2D(GL_TEXTURE_2D, 0, 3, img[1].width, img[1].height, 0,
-//             GL_RGB, GL_UNSIGNED_BYTE, img[1].data);
-
-// Load Stardust texture
-//glBindTexture(GL_TEXTURE_2D, g.stardustTexture);
-//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//glTexImage2D(GL_TEXTURE_2D, 0, 3, img[2].width, img[2].height, 0,
-//             GL_RGB, GL_UNSIGNED_BYTE, img[2].data);
+// Load game over texture
+glBindTexture(GL_TEXTURE_2D, gl.gameOverTexture);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+glTexImage2D(GL_TEXTURE_2D, 0, 3, img[1].width, img[1].height, 0,
+             GL_RGB, GL_UNSIGNED_BYTE, img[1].data);
 }
-
 
 void normalize2d(Vec v)
 {
@@ -681,44 +593,7 @@ void check_mouse(XEvent *e)
     //Was a mouse button clicked?
     static int savex = 0;
     static int savey = 0;
-    //
     static int ct=0;
-    //std::cout << "m" << std::endl << std::flush;
-    // if (e->type == ButtonRelease) {
-    // 	return;
-    // }
-    // if (e->type == ButtonPress) {
-    // 	if (e->xbutton.button==1) {
-    // // 		//Left button is down
-    // // 		//a little time between each bullet
-    // // 		struct timespec bt;
-    // // 		clock_gettime(CLOCK_REALTIME, &bt);
-    // // 		double ts = timeDiff(&g.bulletTimer, &bt);
-    // // 		if (ts > 0.1) {
-    // // 			timeCopy(&g.bulletTimer, &bt);
-    // // 			//shoot a bullet...
-    // // 			if (g.nbullets < MAX_BULLETS) {
-    // // 				Bullet *b = &g.barr[g.nbullets];
-    // // 				timeCopy(&b->time, &bt);
-    // // 				b->pos[0] = g.ship.pos[0];
-    // // 				b->pos[1] = g.ship.pos[1];
-    // // 				b->vel[0] = g.ship.vel[0];
-    // // 				b->vel[1] = g.ship.vel[1];
-    // // 				//convert ship angle to radians
-    // // 				Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
-    // // 				//convert angle to a vector
-    // // 				Flt xdir = cos(rad);
-    // // 				Flt ydir = sin(rad);
-    // // 				b->pos[0] += xdir*20.0f;
-    // // 				b->pos[1] += ydir*20.0f;
-    // // 				b->vel[0] += xdir*6.0f + rnd()*0.1;
-    // // 				b->vel[1] += ydir*6.0f + rnd()*0.1;
-    // // 				b->color[0] = 1.0f;
-    // // 				b->color[1] = 1.0f;
-    // // 				b->color[2] = 1.0f;
-    // // 				++g.nbullets;
-    //  			}
-    //  		}
 
     if (e->type == ButtonPress) {
         if (e->xbutton.button == Button1) {
@@ -834,26 +709,10 @@ int check_keys(XEvent *e)
             break;
         case XK_c:
             // credits
-            // =====================================================
-            // optimize the following 4 lines
-            //if (gl.credits == 0) 
-            //    gl.credits = 1;
-            //else
-            //    gl.credits = 0;
-            // =====================================================
             gl.credits = !gl.credits;   // logical not
-            // =====================================================
-            //gl.credits = gl.credits ^ 1;  // exclusive or
-            // ===================================================== 
-            //gl.credits = ~gl.credits;   // bitwise not
-            // =====================================================
             break;
         case XK_i:
             // instructions
-            // -------------------------------------------------------
-            // added instructions for space game; has not changed for
-            // original asteroids game
-            // -------------------------------------------------------
             gl.instructions = !gl.instructions;
             break;
         case XK_space:
@@ -863,72 +722,10 @@ int check_keys(XEvent *e)
     return 0;
 }
 
-/*
-void deleteAsteroid(Game *g, Asteroid *node)
-{
-    //Remove a node from doubly-linked list
-    //Must look at 4 special cases below.
-    if (node->prev == NULL) {
-        if (node->next == NULL) {
-            //only 1 item in list.
-            g->ahead = NULL;
-        } else {
-            //at beginning of list.
-            node->next->prev = NULL;
-            g->ahead = node->next;
-        }
-    } else {
-        if (node->next == NULL) {
-            //at end of list.
-            node->prev->next = NULL;
-        } else {
-            //in middle of list.
-            node->prev->next = node->next;
-            node->next->prev = node->prev;
-        }
-    }
-    delete node;
-    node = NULL;
-}
-*/
-
 void setGameMode(Game::GameMode mode) {
     g.gameMode = mode;
 }
 
-/*
-void buildAsteroidFragment(Asteroid *ta, Asteroid *a)
-{
-    //build ta from a
-    ta->nverts = 8;
-    ta->radius = a->radius / 2.0;
-    // Flt r2 = ta->radius / 2.0; removed to make circles
-    Flt angle = 0.0f;
-    Flt inc = (PI * 2.0) / ta->nverts; //(Flt)ta->nverts;
-
-    for (int i=0; i<ta->nverts; i++) {
-        ta->vert[i][0] = sin(angle) * ta->radius;
-        ta->vert[i][1] = cos(angle) * ta->radius;
-        angle += inc;
-
-
-        //ta->vert[i][0] = sin(angle) * (r2 + rnd() * ta->radius);
-        //ta->vert[i][1] = cos(angle) * (r2 + rnd() * ta->radius);
-        //angle += inc;
-    }
-    ta->pos[0] = a->pos[0] + rnd()*10.0-5.0;
-    ta->pos[1] = a->pos[1] + rnd()*10.0-5.0;
-    //ta->pos[2] = 0.0f;
-    ta->angle = 0.0;
-    ta->rotate = a->rotate + (rnd() * 4.0 - 2.0);
-    ta->color[0] = 0.8;
-    ta->color[1] = 0.8;
-    ta->color[2] = 0.7;
-    ta->vel[0] = a->vel[0] + (rnd()*2.0-1.0);
-    ta->vel[1] = a->vel[1] + (rnd()*2.0-1.0);
-    //std::cout << "frag" << std::endl;
-}
-*/
 void shootBullet() {
     struct timespec bt;
     clock_gettime(CLOCK_REALTIME, &bt);
@@ -1117,8 +914,8 @@ void physics()
     g.ship.vel[0] *= 0.99f; 
     g.ship.vel[1] *= 0.99f;
 
-    //======================================================================
     //Enemy movement and collision
+    //collision between enemy and player
     if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
         moveEnemiesTowardPlayer();
         updateEnemySpawnTimer();
@@ -1156,119 +953,24 @@ void physics()
                         g.ship.heal(0.1f);
                         HealObject[i].active = false;
                     }
-        
             }
         }
+        if (g.ship.health == 0.0f && !g.isEnd) {
+            g.lastGameMode = static_cast<int>(g.gameMode);
+            g.isEnd = true;
+            g.inMenu = false;
+            g.lastGameMode = g.gameMode;
+            //renderMenu();
+        } 
 }
 
     //======================================================================
-
     // keep ship within window
     if (g.ship.pos[0] < 0) g.ship.pos[0] = 0;
     if (g.ship.pos[0] > gl.xres) g.ship.pos[0] = gl.xres;
     if (g.ship.pos[1] < 0) g.ship.pos[1] = 0;
     if (g.ship.pos[1] > gl.yres) g.ship.pos[1] = gl.yres;
 
-    //Update asteroid positions
-    /*
-    Asteroid *a = g.ahead;
-    while (a) {
-        a->pos[0] += a->vel[0];
-        a->pos[1] += a->vel[1];
-
-        // bounce off the left right edges
-        if (a->pos[0] - a->radius < 0.0f) {
-            a->pos[0] = a->radius;     
-            a->vel[0] = -a->vel[0];    
-        } else if (a->pos[0] + a->radius > gl.xres) {
-            a->pos[0] = gl.xres - a->radius; 
-            a->vel[0] = -a->vel[0];
-        }
-
-
-        // this is to bounce off the top and bottom edges
-        if (a->pos[1] - a->radius < 0.0f) {
-            a->pos[1] = a->radius;     
-            a->vel[1] = -a->vel[1];   
-        } else if (a->pos[1] + a->radius > gl.yres) {
-            a->pos[1] = gl.yres - a->radius; 
-            a->vel[1] = -a->vel[1];
-        }
-
-        a->angle += a->rotate;
-        a = a->next;
-
-    }
-    */
-    //extra comment
-    //
-    //Asteroid collision with bullets?
-    //If collision detected:
-    //     1. delete the bullet
-    //     2. break the asteroid into pieces
-    //        if asteroid small, delete it
-    /*
-    a = g.ahead;
-    while (a) {
-        //is there a bullet within its radius?
-        int i=0;
-        while (i < g.nbullets) {
-            Bullet *b = &g.barr[i];
-            d0 = b->pos[0] - a->pos[0];
-            d1 = b->pos[1] - a->pos[1];
-            dist = (d0*d0 + d1*d1);
-            
-            if (dist < (a->radius*a->radius)) {
-                //===================================================
-                //tracks score: adds point after shooting an enemy
-                //===================================================
-                //
-                g.score += 5;
-                //
-                //===================================================
-                //std::cout << "asteroid hit." << std::endl;
-                //this asteroid is hit.
-                if (a->radius > MINIMUM_ASTEROID_SIZE) {
-                    //break it into pieces.
-                    Asteroid *ta = a;
-                    buildAsteroidFragment(ta, a);
-                    int r = rand()%10+2;
-                    for (int k=0; k<r; k++) {
-                        //get the next asteroid position in the array
-                        Asteroid *ta = new Asteroid;
-                        buildAsteroidFragment(ta, a);
-                        //add to front of asteroid linked list
-                        ta->next = g.ahead;
-                        if (g.ahead != NULL)
-                            g.ahead->prev = ta;
-                        g.ahead = ta;
-                        g.nasteroids++;
-                    }
-                } else {
-                    a->color[0] = 1.0;
-                    a->color[1] = 0.1;
-                    a->color[2] = 0.1;
-                    //asteroid is too small to break up
-                    //delete the asteroid and bullet
-                    Asteroid *savea = a->next;
-                    deleteAsteroid(&g, a);
-                    a = savea;
-                    g.nasteroids--;
-                }
-                //delete the bullet...
-                memcpy(&g.barr[i], &g.barr[g.nbullets-1], sizeof(Bullet));
-                g.nbullets--;
-                if (a == NULL)
-                    break;
-            }
-            
-            i++;
-        }
-        if (a == NULL)
-            break;
-        a = a->next;
-    }
-    */
     //---------------------------------------------------
     //check keys pressed now
     if (gl.keys[XK_Left]) {
@@ -1345,10 +1047,34 @@ void physics()
 }
 
 // -------------------------------------------------------------------
-// add updateGame logic to implement health bar functionality
+// add restart game logic after health reaches 0
 // -------------------------------------------------------------------
-void updateGame() {
+void restartGame() {
+    g.ship.health = 1.0f;
+    g.ship.pos[0] = gl.xres / 2;
+    g.ship.pos[1] = gl.yres / 2;
+    g.ship.vel[0] = 0.0f;
+    g.ship.vel[1] = 0.0f;
+    g.inMenu = false;
+    g.isPaused = false;
+    g.isEnd = false;
 
+    // reset enemies
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        zorpArmy[i].active = false;
+        wiblobArmy[i].active = false;
+    }
+
+    // reset health packs
+    for (int i = 0; i < HealthPack; i++) {
+        HealObject[i].active = false;
+    }
+
+    // reset score 
+    g.score = 0;
+
+    // set game mode to last one played
+    g.gameMode = static_cast<Game::GameMode>(g.lastGameMode);
 }
 
 //----------------------------------------------------------------
@@ -1358,24 +1084,41 @@ void renderMenu() {
     if (g.inMenu) {
         drawMenu(gl.title, gl.xres, gl.yres, gl.titleTexture, g.menuSelection);
         int tmpGameMode = static_cast<int>(g.gameMode);
-        handleMainMenuInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode, g.inMenu);
+        handleMainMenuInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode,
+                g.inMenu);
         g.gameMode = static_cast<Game::GameMode>(tmpGameMode);
         return;
     }
     if (g.isPaused) {
         drawPauseMenu(gl.xres, gl.yres, g.menuSelection);
-        //handlePauseMenuInput();
         int tmpGameMode = static_cast<int>(g.gameMode);
         handlePauseMenuInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode, 
                 g.inMenu, g.isPaused);
         g.gameMode = static_cast<Game::GameMode>(tmpGameMode);
         return;
     }
+    if (g.isEnd) {
+        gl.gameOver = 1;
+        drawGameOver(gl.gameOver, gl.xres, gl.yres, gl.gameOverTexture,
+                g.menuSelection);
+        int tmpGameMode = static_cast<int>(g.gameMode);
+        bool prevIsEnd = g.isEnd;
+        handleGameOverInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode,
+                g.inMenu, g.isPaused, g.isEnd);
+        g.gameMode = static_cast<Game::GameMode>(tmpGameMode);
+        // if the player selected restart
+        if (prevIsEnd && !g.isEnd) {
+            restartGame();
+            return;
+        }
+        return;
+    }
 
     if (g.gameMode == Game::MAIN_MENU) {
         drawMenu(gl.title, gl.xres, gl.yres, gl.titleTexture, g.menuSelection);
         int tmpGameMode = static_cast<int>(g.gameMode);
-        handleMainMenuInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode, g.inMenu);
+        handleMainMenuInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode, 
+                g.inMenu);
         g.gameMode = static_cast<Game::GameMode>(tmpGameMode);
         return;
     } else if (g.gameMode == Game::ENDLESS_MODE) {
@@ -1422,9 +1165,6 @@ void drawUFO(float x, float y, GLuint texture) {
     glPopMatrix();
 }
 
-
-
-
 void cleanupTextures() {
     glDeleteTextures(1, &g.ufoTexture);
     glDeleteTextures(3, shipTextures);
@@ -1449,7 +1189,6 @@ void render()
         moveBossesTowardPlayer();
         renderBosses();
         renderHeal();
-
     } else if (gl.background) {
         glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
         glBegin(GL_QUADS);
@@ -1460,105 +1199,6 @@ void render()
         glEnd();
     }
 
-    // Game info text
-   /* r.bot = gl.yres - 20;
-    r.left = 10;
-    r.center = 0;
-    //ggprint8b(&r, 16, 0x00ffff00, "n bullets: %i", g.nbullets);
-    //ggprint8b(&r, 16, 0x00ffff00, "n asteroids: %i", g.nasteroids);
-    // ----------------------------------------------------------------
-    // ggprint8b(&r, 16, 0x00ffff00, "enemies left: %i", g.nenemies);
-    // ----------------------------------------------------------------
-    ggprint8b(&r, 16, 0x00ffff00, "Press c for Credits");
-    ggprint8b(&r, 16, 0x00ffff00, "Press i for Instructions");
-
-    //=================================================================
-    //track score: score display
-    //=================================================================
-    //
-    r.bot = gl.yres - 20;
-    r.left = gl.xres - 100;
-    r.center = 0;
-    ggprint8b(&r, 16, 0x00ffffff, "SCORE: %d", g.score);
-    //
-    */
-
-    //screenLeftText(gl.xres, gl.yres);
-    //screenRightText(gl.xres, gl.yres, g.score); 
-    //=================================================================
-    //positioning reset
-    //=================================================================
-    //r.left = 10;
-    //r.bot = gl.yres - 60;
-    //
-    //
-    //=================================================================
-/*
-    if (gl.credits) {
-        extern void show_christine(Rect *r);
-        extern void show_davalos(Rect *r);
-        extern void show_edwin(Rect *r);
-        extern void show_bbarrios(Rect *r);
-        extern void show_mgarris(Rect *r);
-        show_christine(&r);
-        show_davalos(&r);
-        show_edwin(&r);
-        show_bbarrios(&r);
-        show_mgarris(&r);
-    }
-
-    if (gl.instructions) {
-        extern void show_instructions(Rect *r);
-        show_instructions(&r);
-    }
-*/
-//-------------------------------------------------------------------------
-    //Draw the ship
-    /*
-	glColor3fv(g.ship.color);
-	glPushMatrix();
-	glTranslatef(g.ship.pos[0], g.ship.pos[1], g.ship.pos[2]);
-	//float angle = atan2(ship.dir[1], ship.dir[0]);
-	glRotatef(g.ship.angle, 0.0f, 0.0f, 1.0f);
-	glBegin(GL_TRIANGLES);
-	//glVertex2f(-10.0f, -10.0f);
-	//glVertex2f(  0.0f, 20.0f);
-	//glVertex2f( 10.0f, -10.0f);
-	glVertex2f(-12.0f, -10.0f);
-	glVertex2f(  0.0f,  20.0f);
-	glVertex2f(  0.0f,  -6.0f);
-	glVertex2f(  0.0f,  -6.0f);
-	glVertex2f(  0.0f,  20.0f);
-	glVertex2f( 12.0f, -10.0f);
-	glEnd();
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glBegin(GL_POINTS);
-	glVertex2f(0.0f, 0.0f);
-	glEnd();
-	glPopMatrix();
-	if (gl.keys[XK_Up] || g.mouseThrustOn || gl.keys[XK_Down]) {
-		int i;
-		//draw thrust
-		Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
-		//convert angle to a vector
-		Flt xdir = cos(rad);
-		Flt ydir = sin(rad);
-		Flt xs,ys,xe,ye,r;
-		glBegin(GL_LINES);
-		for (i=0; i<16; i++) {
-			xs = -xdir * 11.0f + rnd() * 4.0 - 2.0;
-			ys = -ydir * 11.0f + rnd() * 4.0 - 2.0;
-			r = rnd()*40.0+40.0;
-			xe = -xdir * r + rnd() * 18.0 - 9.0;
-			ye = -ydir * r + rnd() * 18.0 - 9.0;
-			glColor3f(rnd()*.3+.7, rnd()*.3+.7, 0);
-			glVertex2f(g.ship.pos[0]+xs,g.ship.pos[1]+ys);
-			glVertex2f(g.ship.pos[0]+xe,g.ship.pos[1]+ye);
-		}
-		glEnd();
-	}
-	*/
-
     renderParticles();
 
     drawUFO(g.ship.pos[0], g.ship.pos[1], shipTextures[selectedShip]);
@@ -1568,68 +1208,8 @@ void render()
     glVertex2f(0.0f, 0.0f);
     glEnd();
     glPopMatrix();
-    // if (gl.keys[XK_Up] || g.mouseThrustOn || gl.keys[XK_Down]) {
-    //     int i;
-    //     //draw thrust
-    //     Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
-    //     //convert angle to a vector
-    //     Flt xdir = cos(rad);
-    //     Flt ydir = sin(rad);
-    //     Flt xs,ys,xe,ye,r;
-    //     glBegin(GL_LINES);
-    //     for (i=0; i<16; i++) {
-    //         xs = -xdir * 11.0f + rnd() * 4.0 - 2.0;
-    //         ys = -ydir * 11.0f + rnd() * 4.0 - 2.0;
-    //         r = rnd()*40.0+40.0;
-    //         xe = -xdir * r + rnd() * 18.0 - 9.0;
-    //         ye = -ydir * r + rnd() * 18.0 - 9.0;
-    //         glColor3f(rnd()*.3+.7, rnd()*.3+.7, 0);
-    //         glVertex2f(g.ship.pos[0]+xs,g.ship.pos[1]+ys);
-    //         glVertex2f(g.ship.pos[0]+xe,g.ship.pos[1]+ye);
-    //     }
-    //     glEnd();
-    // }
+    
     glEnable(GL_TEXTURE_2D);
-    //-------------------------------------------------------------------------
-    //Draw the asteroids
-    /*
-    {
-        Asteroid *a = g.ahead;
-        while (a) {
-            //Log("draw asteroid...\n");
-            glColor3fv(a->color);
-            glPushMatrix();
-            glTranslatef(a->pos[0], a->pos[1], a->pos[2]);
-            glRotatef(a->angle, 0.0f, 0.0f, 1.0f);
-            //-----------------------------------------------------------
-            //fill asteroids with color
-            glColor4f(a->color[0], a->color[1], a->color[2], 0.2f);
-            glBegin(GL_TRIANGLE_FAN);
-            for (int j=0; j<a->nverts; j++) {
-                glVertex2f(a->vert[j][0], a->vert[j][1]);
-            }
-            glEnd();
-            //----------------------------------------------------------
-            glBegin(GL_LINE_LOOP);
-            //Log("%i verts\n",a->nverts);
-            for (int j=0; j<a->nverts; j++) {
-                glVertex2f(a->vert[j][0], a->vert[j][1]);
-            }
-            glEnd();
-            //glBegin(GL_LINES);
-            //	glVertex2f(0,   0);
-            //	glVertex2f(a->radius, 0);
-            //glEnd();
-            glPopMatrix();
-            glColor3f(1.0f, 0.0f, 0.0f);
-            glBegin(GL_POINTS);
-            glVertex2f(a->pos[0], a->pos[1]);
-            glEnd();
-            a = a->next;
-        }
-    }
-    glEnable(GL_TEXTURE_2D);
-    */
     //-------------------------------------------------------------------------
     //Draw the bullets
     for (int i=0; i<g.nbullets; i++) {
@@ -1667,9 +1247,7 @@ void render()
     }
 
     glEnable(GL_TEXTURE_2D);
-
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
 }
 
 
