@@ -12,40 +12,79 @@ void show_bbarrios(Rect *r)
 
 ALCdevice *audioDevice = nullptr;
 ALCcontext *audioContext = nullptr;
+
 ALuint laserSource;
 ALuint laserBuffer;
 
+ALuint enemyDieSource;
+ALuint enemyDieBuffer;
+
+ALuint musicSource;
+ALuint musicBuffer;
+
+//opens OpenAL
 bool initOpenAL() {
     audioDevice = alcOpenDevice(nullptr);
     if (!audioDevice) {
-        std::cerr << "OpenAL: Failed to open audio device\n";
+        std::cerr << "couldnt open audio device\n";
         return false;
     }
 
     audioContext = alcCreateContext(audioDevice, nullptr);
     if (!audioContext || !alcMakeContextCurrent(audioContext)) {
-        std::cerr << "OpenAL: Failed to create or set context\n";
+        std::cerr << "OpenAL failed, sorry\n";
         return false;
     }
 
+    // loads laser sound
     alGenSources(1, &laserSource);
     if (!loadWavFile("laser1.wav", laserBuffer)) {
-        std::cerr << "Failed to load laser1.wav\n";
+        std::cerr << "couldnt load laser sound\n";
         return false;
     }
+    alSourcei(laserSource, AL_BUFFER, laserBuffer);
 
-    std::cout << "OpenAL initialized successfully.\n";
+    // loads enemy explodes sound
+    alGenSources(1, &enemyDieSource);
+    if (!loadWavFile("enemy_explode.wav", enemyDieBuffer)) {
+        std::cerr << "couldnt load enemy explode sound\n";
+        return false;
+    }
+    alSourcei(enemyDieSource, AL_BUFFER, enemyDieBuffer);
+
+    // loads menu music
+    alGenSources(1, &musicSource);
+    if (!loadWavFile("menu_theme.wav", musicBuffer)) {
+        std::cerr << "couldnt load menu theme music\n";
+        return false;
+    }
+    alSourcei(musicSource, AL_BUFFER, musicBuffer);
+
+
+    std::cout << "OpenAl worked fine.\n";
     return true;
+
 }
 
+
+
 void shutdownOpenAL() {
+    alDeleteSources(1, &enemyDieSource);
+    alDeleteBuffers(1, &enemyDieBuffer);
     alDeleteSources(1, &laserSource);
     alDeleteBuffers(1, &laserBuffer);
+    alDeleteSources(1, &musicSource);
+    alDeleteBuffers(1, &musicBuffer);
+    alDeleteSources(1, &musicSource);  
+    alDeleteBuffers(1, &musicBuffer);    
+
+
     alcMakeContextCurrent(nullptr);
     if (audioContext) alcDestroyContext(audioContext);
     if (audioDevice) alcCloseDevice(audioDevice);
+
     std::cout << "OpenAL shut down.\n";
-}
+    }
 
 bool loadWavFile(const char* filename, ALuint &buffer) {
     std::ifstream file(filename, std::ios::binary);
@@ -61,14 +100,14 @@ bool loadWavFile(const char* filename, ALuint &buffer) {
         return false;
     }
 
-    file.ignore(4); 
-    file.read(chunk, 4); 
+    file.ignore(4);
+    file.read(chunk, 4);
     if (strncmp(chunk, "WAVE", 4) != 0) {
         std::cerr << "ERROR: Not a WAVE file\n";
         return false;
     }
 
-    file.read(chunk, 4); 
+    file.read(chunk, 4);
     int fmtSize;
     file.read((char*)&fmtSize, 4);
 
@@ -84,7 +123,7 @@ bool loadWavFile(const char* filename, ALuint &buffer) {
 
     if (fmtSize > 16) file.ignore(fmtSize - 16);
 
-    
+
     while (true) {
         file.read(chunk, 4);
         if (file.eof()) {
@@ -109,14 +148,30 @@ bool loadWavFile(const char* filename, ALuint &buffer) {
             std::cout << "WAV loaded successfully: " << filename << "\n";
             return true;
         } else {
-            // Skip non-data chunk
             file.seekg(sectionSize, std::ios::cur);
         }
     }
 }
 
+// play laser sound
 void playLaserSound() {
     alSourcei(laserSource, AL_BUFFER, laserBuffer);
     alSourcePlay(laserSource);
 }
 
+// play explosion sound
+void playEnemyDieSound() {
+    alSourcei(enemyDieSource, AL_BUFFER, enemyDieBuffer);
+    alSourcePlay(enemyDieSource);
+}
+
+// play theme music
+void playThemeMusic() {
+    alSourcei(musicSource, AL_LOOPING, AL_TRUE);
+    alSourcePlay(musicSource);
+}
+
+// stop theme music
+void stopThemeMusic() {
+    alSourceStop(musicSource);
+}
