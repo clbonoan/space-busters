@@ -59,7 +59,7 @@ struct Particle {
     float alpha;
 };
 
-std::vector<Particle> particles;
+vector<Particle> particles;
 
 void addThrustParticle(float x, float y, float dx, float dy) {
     Particle p;
@@ -113,11 +113,25 @@ void render_ship_selection() {
     glClear(GL_COLOR_BUFFER_BIT);
     glEnable(GL_TEXTURE_2D);
 
+    glPushMatrix();
+    glTranslatef(gl.xres / 2, gl.yres - 90, 0);
+    glScalef(2.5f, 2.5f, 1.0f);
     Rect r;
-    r.bot = gl.yres - 90;
-    r.left = gl.xres / 2 - 100;
-    r.center = 0;
-    ggprint8b(&r, 24, 0x00ffffff, "Select Your Ship");
+    r.bot = 0;
+    r.left = 0;
+    r.center = 1;
+    ggprint8b(&r, 48, 0x00ffffff, "Select Your Ship");
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(gl.xres / 2, 100, 0);
+    glScalef(2.0f, 2.0f, 1.0f);
+    r.bot = 0;
+    r.left = 0;
+    r.center = 1;
+    ggprint8b(&r, 48, 0x00ffffff, "Use Left/Right to select");
+    ggprint8b(&r, 48, 0x00ffffff, "Press Enter to confirm");
+    glPopMatrix();
 
     float centerX = gl.xres / 2;
     float centerY = gl.yres / 2;
@@ -160,12 +174,6 @@ void render_ship_selection() {
             glEnd();
         }
     }
-
-    glEnable(GL_TEXTURE_2D);
-    r.bot = 100;
-    r.left = gl.xres / 2 - 120;
-    ggprint8b(&r, 16, 0x00ffffff, "Use Left/Right to select");
-    ggprint8b(&r, 16, 0x00ffffff, "Press Enter to confirm");
 }
 
 void handle_ship_selection_input() {
