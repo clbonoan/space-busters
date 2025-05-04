@@ -38,7 +38,7 @@ bool initOpenAL() {
 
     // loads laser sound
     alGenSources(1, &laserSource);
-    if (!loadWavFile("laser1.wav", laserBuffer)) {
+    if (!loadWavFile("audio/laser1.wav", laserBuffer)) {
         std::cerr << "couldnt load laser sound\n";
         return false;
     }
@@ -46,7 +46,7 @@ bool initOpenAL() {
 
     // loads enemy explodes sound
     alGenSources(1, &enemyDieSource);
-    if (!loadWavFile("enemy_explode.wav", enemyDieBuffer)) {
+    if (!loadWavFile("audio/enemy_explode.wav", enemyDieBuffer)) {
         std::cerr << "couldnt load enemy explode sound\n";
         return false;
     }
@@ -54,7 +54,7 @@ bool initOpenAL() {
 
     // loads menu music
     alGenSources(1, &musicSource);
-    if (!loadWavFile("menu_theme.wav", musicBuffer)) {
+    if (!loadWavFile("audio/pudding.wav", musicBuffer)) {
         std::cerr << "couldnt load menu theme music\n";
         return false;
     }
