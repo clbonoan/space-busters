@@ -825,149 +825,149 @@ void physics()
     //     pollMousePosition(x11.getDisplayPointer(), x11.getWindowHandle());
     //     timeCopy(&lastPollTime, &now);
     // }
-    updateCrashAnimation();
-    mousePos[0] = gl.polledMouseX.load();
-    mousePos[1] = gl.polledMouseY.load();
+    if (!g.isPaused) {
+        updateCrashAnimation();
+        mousePos[0] = gl.polledMouseX.load();
+        mousePos[1] = gl.polledMouseY.load();
 
-    if (gl.keys[XK_space] || gl.keys[Button1]) {
-        shootBullet();
-    }
-
-    //Update bullet positions
-    struct timespec bt;
-    clock_gettime(CLOCK_REALTIME, &bt);
-    int i = 0;
-    while (i < g.nbullets) {
-        Bullet *b = &g.barr[i];
-        //How long has bullet been alive?
-        double ts = timeDiff(&b->time, &bt);
-        if (ts > 2.5) {
-            //time to delete the bullet.
-            memcpy(&g.barr[i], &g.barr[g.nbullets-1],
-                    sizeof(Bullet));
-            g.nbullets--;
-            //do not increment i.
-            continue;
+        if (gl.keys[XK_space] || gl.keys[Button1]) {
+            shootBullet();
         }
-        //move the bullet
-        b->pos[0] += b->vel[0];
-        b->pos[1] += b->vel[1];
+
+        //Update bullet positions
+        struct timespec bt;
+        clock_gettime(CLOCK_REALTIME, &bt);
+        int i = 0;
+        while (i < g.nbullets) {
+            Bullet *b = &g.barr[i];
+            //How long has bullet been alive?
+            double ts = timeDiff(&b->time, &bt);
+            if (ts > 2.5) {
+                //time to delete the bullet.
+                memcpy(&g.barr[i], &g.barr[g.nbullets-1],
+                        sizeof(Bullet));
+                g.nbullets--;
+                //do not increment i.
+                continue;
+            }
+            //move the bullet
+            b->pos[0] += b->vel[0];
+            b->pos[1] += b->vel[1];
        
-        //Enemy
-        if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
-           hitEnemy(b->pos[0], b->pos[1]);
+            //Enemy
+            if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
+                hitEnemy(b->pos[0], b->pos[1]);
 	   
-	   //play enemy explodes sound
-	   playEnemyDieSound();
-	} 
+	            //play enemy explodes sound
+	            playEnemyDieSound();
+	        } 
 
-        // bounce the bullets/ kill the bullet
-        if (b->pos[0] < 0.0f) {
-            memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
-            g.nbullets--;
-            continue;
-            //b->pos[0] = 0.0f;
-            //b->vel[0] = -b->vel[0];
-        } else if (b->pos[0] > (float)gl.xres) {
-            memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
-            g.nbullets--;
-            continue;
-            //b->pos[0] = gl.xres;
-            //b->vel[0] = -b->vel[0];
-        }
-
-        // bullets bounce off the edges / kill the bullet
-        if (b->pos[1] < 0.0f) {
-            memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
-            g.nbullets--;
-            continue;
-            //b->pos[1] = 0.0f;
-            //b->vel[1] = -b->vel[1];
-        } else if (b->pos[1] > (float)gl.yres) {
-            memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
-            g.nbullets--;
-            continue;
-            //b->pos[1] = gl.yres;
-            //b->vel[1] = -b->vel[1];
-        }
-        ++i;
-    }
-
-    if (gl.keys[XK_Up] || gl.keys[XK_w]) {
-        g.ship.vel[1] += 0.1f;  // Up
-        addThrustParticle(g.ship.pos[0], g.ship.pos[1], -1.0f, 0.0f);
-    }
-    if (gl.keys[XK_Down] || gl.keys[XK_s]) {
-        g.ship.vel[1] -= 0.1f;  // Down
-        addThrustParticle(g.ship.pos[0], g.ship.pos[1], -1.0f, 0.0f);
-    }
-    if (gl.keys[XK_Left] || gl.keys[XK_a]) {
-        g.ship.vel[0] -= 0.1f;  // Left
-        addThrustParticle(g.ship.pos[0], g.ship.pos[1], -1.0f, 0.0f);
-    }
-    if (gl.keys[XK_Right] || gl.keys[XK_d]) {
-        g.ship.vel[0] += 0.1f;  // Right
-        addThrustParticle(g.ship.pos[0], g.ship.pos[1], -1.0f, 0.0f);
-    }
-
-    g.ship.pos[0] += g.ship.vel[0];
-    g.ship.pos[1] += g.ship.vel[1];
-
-    shipTargetPos[0] = g.ship.pos[0];
-    shipTargetPos[1] = g.ship.pos[1];
-
-
-    // adds some friction
-    g.ship.vel[0] *= 0.99f; 
-    g.ship.vel[1] *= 0.99f;
-
-    //Enemy movement and collision
-    //collision between enemy and player
-    if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
-        moveEnemiesTowardPlayer();
-        updateEnemySpawnTimer();
-        updateStarSpawnTimer();
-
-        for (int i=0; i < MAX_ENEMIES; i++) {
-            if (zorpArmy[i].active) {
-                float dx = zorpArmy[i].x - g.ship.pos[0];
-                float dy = zorpArmy[i].y - g.ship.pos[1];
-                float dist = sqrt(dx * dx + dy * dy);
-                    if (dist < 35.0f) {
-                        g.ship.takeDamage(0.1f);
-                        zorpArmy[i].active = false;
-                        printf("hit by Zorp! Health %2f\n", g.ship.health);
-                    }
+            // bounce the bullets/ kill the bullet
+            if (b->pos[0] < 0.0f) {
+                memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
+                g.nbullets--;
+                continue;
+                //b->pos[0] = 0.0f;
+                //b->vel[0] = -b->vel[0];
+            } else if (b->pos[0] > (float)gl.xres) {
+                memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
+                g.nbullets--;
+                continue;
+                //b->pos[0] = gl.xres;
+                //b->vel[0] = -b->vel[0];
             }
-            if (wiblobArmy[i].active) {
-                float dx = wiblobArmy[i].x - g.ship.pos[0];
-                float dy = wiblobArmy[i].y - g.ship.pos[1];
-                float dist = sqrt(dx * dx + dy * dy);
-                    if (dist < 35.0f) {
-                        g.ship.takeDamage(0.1f);
-                        wiblobArmy[i].active = false;
-                        printf("hit by Wiblob! Health %2f\n", g.ship.health);
-                    }
+
+            // bullets bounce off the edges / kill the bullet
+            if (b->pos[1] < 0.0f) {
+                memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
+                g.nbullets--;
+                continue;
+                //b->pos[1] = 0.0f;
+                //b->vel[1] = -b->vel[1];
+            } else if (b->pos[1] > (float)gl.yres) {
+                memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
+                g.nbullets--;
+                continue;
+                //b->pos[1] = gl.yres;
+                //b->vel[1] = -b->vel[1];
             }
+            ++i;
         }
+
+        if (gl.keys[XK_Up] || gl.keys[XK_w]) {
+            g.ship.vel[1] += 0.1f;  // Up
+            addThrustParticle(g.ship.pos[0], g.ship.pos[1], -1.0f, 0.0f);
+        }
+        if (gl.keys[XK_Down] || gl.keys[XK_s]) {
+            g.ship.vel[1] -= 0.1f;  // Down
+            addThrustParticle(g.ship.pos[0], g.ship.pos[1], -1.0f, 0.0f);
+        }
+        if (gl.keys[XK_Left] || gl.keys[XK_a]) {
+            g.ship.vel[0] -= 0.1f;  // Left
+            addThrustParticle(g.ship.pos[0], g.ship.pos[1], -1.0f, 0.0f);
+        }
+        if (gl.keys[XK_Right] || gl.keys[XK_d]) {
+            g.ship.vel[0] += 0.1f;  // Right
+            addThrustParticle(g.ship.pos[0], g.ship.pos[1], -1.0f, 0.0f);
+        }
+
+        g.ship.pos[0] += g.ship.vel[0];
+        g.ship.pos[1] += g.ship.vel[1];
+
+        shipTargetPos[0] = g.ship.pos[0];
+        shipTargetPos[1] = g.ship.pos[1];
+
+
+        // adds some friction
+        g.ship.vel[0] *= 0.99f; 
+        g.ship.vel[1] *= 0.99f;
+
+        //Enemy movement and collision
+        //collision between enemy and player
+        if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
+            moveEnemiesTowardPlayer();
+            updateEnemySpawnTimer();
+            updateStarSpawnTimer();
         
-        for( int i=0; i < HealthPack; i++) {
-            if(HealObject[i].active) {
-                float dx = HealObject[i].x - g.ship.pos[0];
-                float dy = HealObject[i].y - g.ship.pos[1];
-                float dist = sqrt(dx * dx + dy * dy);
-                    if (dist < 35.0f) {
-                        g.ship.heal(0.1f);
-                        HealObject[i].active = false;
-                    }
+            for (int i=0; i < MAX_ENEMIES; i++) {
+                if (zorpArmy[i].active) {
+                    float dx = zorpArmy[i].x - g.ship.pos[0];
+                    float dy = zorpArmy[i].y - g.ship.pos[1];
+                    float dist = sqrt(dx * dx + dy * dy);
+                        if (dist < 35.0f) {
+                            g.ship.takeDamage(0.1f);
+                            zorpArmy[i].active = false;
+                            printf("hit by Zorp! Health %2f\n", g.ship.health);
+                        }
+                }
+                if (wiblobArmy[i].active) {
+                    float dx = wiblobArmy[i].x - g.ship.pos[0];
+                    float dy = wiblobArmy[i].y - g.ship.pos[1];
+                    float dist = sqrt(dx * dx + dy * dy);
+                        if (dist < 35.0f) {
+                            g.ship.takeDamage(0.1f);
+                            wiblobArmy[i].active = false;
+                            printf("hit by Wiblob! Health %2f\n", g.ship.health);
+                        }
+                }   
             }
-        }
+        
+            for( int i=0; i < HealthPack; i++) {
+                if(HealObject[i].active) {
+                    float dx = HealObject[i].x - g.ship.pos[0];
+                    float dy = HealObject[i].y - g.ship.pos[1];
+                    float dist = sqrt(dx * dx + dy * dy);
+                        if (dist < 35.0f) {
+                            g.ship.heal(0.1f);
+                            HealObject[i].active = false;
+                        }
+                }
+            }
               
-            if (g.ship.health == 0.0f && !crash_animation_active && !g.isEnd && !gameOverReady) {
-           
+            if (g.ship.health == 0.0f && !crash_animation_active && !g.isEnd && 
+                    !gameOverReady) {
                 // Start the crash animation only once
-                startCrashAnimation(g.ship.pos[0], g.ship.pos[1]);
-           
+                startCrashAnimation(g.ship.pos[0], g.ship.pos[1]);   
             } else if (g.ship.health == 0.0f && !g.isEnd && gameOverReady) {
                 // After animation is done, transition to Game Over
                 g.lastGameMode = static_cast<int>(g.gameMode);
@@ -990,7 +990,8 @@ void physics()
             //renderMenu();
         } else if (g.ship.health == 0.0f && !g.isEnd && !isCrashDone()) {
             startCrashAnimation (g.ship.pos[0], g.ship.pos[1]);
-        } */           
+        } */          
+    } 
 
 }
 
@@ -1231,16 +1232,24 @@ void render()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     if (g.gameMode == Game::ENDLESS_MODE) {
-        drawNebulaBackground(); // replaces gl.backgroundTexture
+        drawNebulaBackground(); 
         updateEnemySpawnTimer();
         updateStarSpawnTimer();
-        moveEnemiesTowardPlayer();
+        if (!g.isPaused) {
+            moveEnemiesTowardPlayer();
+        }
         renderEnemies();
         renderHeal();
     } else if (g.gameMode == Game::BOSS_MODE) {
         drawNebulaBackground();
-        moveBossesTowardPlayer();
+        updateEnemySpawnTimer();
+        updateStarSpawnTimer();
+        if (!g.isPaused) {
+            moveBossesTowardPlayer();
+            moveEnemiesTowardPlayer();
+        }
         renderBosses();
+        renderEnemies();
         renderHeal();
     } else if (gl.background) {
         glBindTexture(GL_TEXTURE_2D, gl.backgroundTexture);
