@@ -836,7 +836,7 @@ void physics()
     //     pollMousePosition(x11.getDisplayPointer(), x11.getWindowHandle());
     //     timeCopy(&lastPollTime, &now);
     // }
-
+    updateCrashAnimation();
     mousePos[0] = gl.polledMouseX.load();
     mousePos[1] = gl.polledMouseY.load();
 
@@ -973,13 +973,36 @@ void physics()
                     }
             }
         }
-        if (g.ship.health == 0.0f && !g.isEnd) {
+              
+            if (g.ship.health == 0.0f && !crash_animation_active && !g.isEnd && !gameOverReady) {
+           
+                // Start the crash animation only once
+                startCrashAnimation(g.ship.pos[0], g.ship.pos[1]);
+           
+            } else if (g.ship.health == 0.0f && !g.isEnd && gameOverReady) {
+                // After animation is done, transition to Game Over
+                g.lastGameMode = static_cast<int>(g.gameMode);
+                g.isEnd = true;
+                g.inMenu = false;
+                gameOverReady = false;
+            }
+
+        /*if (g.ship.health == 0.0f && !g.isEnd && isCrashDone()) {
             g.lastGameMode = static_cast<int>(g.gameMode);
             g.isEnd = true;
             g.inMenu = false;
-            g.lastGameMode = g.gameMode;
+            g.lastGameMode = g.gameMode; 
+
+            startCrashAnimation(g.ship.pos[0], g.ship.pos[1]);
+            g.lastGameMode = static_cast<int>(g.gameMode);
+            g.isEnd = true;
+            g.inMenu = false;
+
             //renderMenu();
-        } 
+        } else if (g.ship.health == 0.0f && !g.isEnd && !isCrashDone()) {
+            startCrashAnimation (g.ship.pos[0], g.ship.pos[1]);
+        } */           
+
 }
 
     //======================================================================
@@ -1228,6 +1251,15 @@ void render()
     glPopMatrix();
     
     glEnable(GL_TEXTURE_2D);
+
+
+    //------------------------------
+    //draws crash animation   
+    if (crash_animation_active) {
+        drawCrashAnimation();
+       // return;
+    }
+
     //-------------------------------------------------------------------------
     //Draw the bullets
     for (int i=0; i<g.nbullets; i++) {
@@ -1248,6 +1280,7 @@ void render()
         glEnd();
     }
     drawHealthBar(gl.xres, g.ship.health);
+    drawCrashAnimation();
     screenLeftText(gl.yres);
     screenRightText(gl.xres, gl.yres, g.score); 
     if (gl.credits) {

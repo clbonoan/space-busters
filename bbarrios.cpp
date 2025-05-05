@@ -4,6 +4,10 @@
 #include <fstream>
 #include <vector>
 #include <cstring>
+#include <GL/gl.h>
+#include <GL/glx.h>
+#include <cmath>
+#include <ctime>
 
 void show_bbarrios(Rect *r)
 {
@@ -21,6 +25,68 @@ ALuint enemyDieBuffer;
 
 ALuint musicSource;
 ALuint musicBuffer;
+
+inline float rnd() {
+    return ((float)rand()) / (float)RAND_MAX;
+}
+
+
+bool gameOverReady = false;
+bool crash_animation_active = false;
+float crash_center_x = 0.0f, crash_center_y = 0.0f;
+float crash_timer = 0.0f;
+const float CRASH_DURATION= 1.2f;
+struct timespec crash_start_time;
+
+
+void startCrashAnimation(float x, float y) {
+    crash_center_x = x;
+    crash_center_y = y;
+    crash_timer = CRASH_DURATION;
+    crash_animation_active = true;
+    clock_gettime(CLOCK_REALTIME, &crash_start_time);
+}
+
+void updateCrashAnimation() {
+    if (!crash_animation_active) return;
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    double elapsed = (now.tv_sec - crash_start_time.tv_sec) +
+                     (now.tv_nsec - crash_start_time.tv_nsec) / 1e9;
+    if (elapsed >= CRASH_DURATION) {
+        crash_animation_active = false;
+        gameOverReady = true;
+    }
+}
+
+bool isCrashDone() {
+    return !crash_animation_active;
+}
+
+void drawCrashAnimation() {
+    if (!crash_animation_active) return;
+
+    glPushMatrix();
+    glTranslatef(crash_center_x, crash_center_y, 0.0f);
+
+    for (int i = 0; i < 30; i++) {
+        float a = ((float)rand() / RAND_MAX) * 2 * M_PI;
+        float r = 30.0f * ((float)rand() / RAND_MAX);
+        float x = cos(a) * r;
+        float y = sin(a) * r;
+        glColor3ub(255, 255, 0);
+        glBegin(GL_TRIANGLE_FAN);
+            glVertex2f(x, y);
+            for (int j = 0; j <= 10; j++) {
+                float theta = j / 10.0f * 2 * M_PI;
+                glVertex2f(x + cos(theta) * 2, y + sin(theta) * 2);
+            }
+        glEnd();
+    }
+
+    glPopMatrix();
+}
+
 
 //opens OpenAL
 bool initOpenAL() {
