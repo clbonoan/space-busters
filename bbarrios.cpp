@@ -23,6 +23,10 @@ float crash_center_x = 0.0f, crash_center_y = 0.0f;
 float crash_timer = 0.0f;
 const float CRASH_DURATION = 0.5f;
 struct timespec crash_start_time;
+//struct timespec lastExplosionTime = {0,0};
+//const double explostionCooldown = 0.5
+
+
 
 void resetCrashState()
 {
@@ -141,7 +145,7 @@ bool initOpenAL()
     alSourcei(laserSource, AL_BUFFER, laserBuffer);
 
     alGenSources(1, &enemyDieSource);
-    if (!loadWavFile("audio/enemy_explode.wav", enemyDieBuffer)) {
+    if (!loadWavFile("audio/enemy_explode2.wav", enemyDieBuffer)) {
         std::cerr << "couldn't load enemy explode sound\n";
         return false;
     }
@@ -157,6 +161,9 @@ bool initOpenAL()
     std::cout << "OpenAL initialized.\n";
     return true;
 }
+
+
+
 
 // Releases OpenAL resources
 void shutdownOpenAL()
@@ -254,11 +261,21 @@ void playLaserSound()
     alSourcePlay(laserSource);
 }
 
-void playEnemyDieSound()
+
+void playEnemyDieSound() {
+    ALint state;
+    alGetSourcei(enemyDieSource, AL_SOURCE_STATE, &state);
+
+    if (state != AL_PLAYING) {
+        alSourcePlay(enemyDieSource);
+    }
+}
+
+/*void playEnemyDieSound()
 {
     alSourcei(enemyDieSource, AL_BUFFER, enemyDieBuffer);
     alSourcePlay(enemyDieSource);
-}
+}*/
 
 void playThemeMusic()
 {
