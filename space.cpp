@@ -1088,7 +1088,8 @@ void restartGame() {
     g.inMenu = false;
     g.isPaused = false;
     g.isEnd = false;
-
+    resetCrashState();
+     
     // reset enemies
     for (int i = 0; i < MAX_ENEMIES; i++) {
         zorpArmy[i].active = false;

@@ -9,37 +9,29 @@
 #include <cmath>
 #include <ctime>
 
+// Credits
 void show_bbarrios(Rect *r)
 {
     ggprint8b(r, 16, 0x00ff00ff, "Bryan - just a chill guy:");
 }
 
-ALCdevice *audioDevice = nullptr;
-ALCcontext *audioContext = nullptr;
 
-ALuint laserSource;
-ALuint laserBuffer;
-
-ALuint enemyDieSource;
-ALuint enemyDieBuffer;
-
-ALuint musicSource;
-ALuint musicBuffer;
-
-inline float rnd() {
-    return ((float)rand()) / (float)RAND_MAX;
-}
-
-
+// Crash Animation variables 
 bool gameOverReady = false;
 bool crash_animation_active = false;
 float crash_center_x = 0.0f, crash_center_y = 0.0f;
 float crash_timer = 0.0f;
-const float CRASH_DURATION= 1.2f;
+const float CRASH_DURATION = 0.5f;
 struct timespec crash_start_time;
 
+void resetCrashState()
+{
+    crash_animation_active = false;
+    crash_timer = 0.0f;
+}
 
-void startCrashAnimation(float x, float y) {
+void startCrashAnimation(float x, float y)
+{
     crash_center_x = x;
     crash_center_y = y;
     crash_timer = CRASH_DURATION;
@@ -47,40 +39,69 @@ void startCrashAnimation(float x, float y) {
     clock_gettime(CLOCK_REALTIME, &crash_start_time);
 }
 
-void updateCrashAnimation() {
-    if (!crash_animation_active) return;
+void updateCrashAnimation()
+{
+    if (!crash_animation_active)
+        return;
+
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
     double elapsed = (now.tv_sec - crash_start_time.tv_sec) +
                      (now.tv_nsec - crash_start_time.tv_nsec) / 1e9;
+
     if (elapsed >= CRASH_DURATION) {
         crash_animation_active = false;
         gameOverReady = true;
     }
 }
 
-bool isCrashDone() {
+bool isCrashDone()
+{
     return !crash_animation_active;
 }
 
-void drawCrashAnimation() {
-    if (!crash_animation_active) return;
+// random float between 0 and 1
+inline float rnd()
+{
+    return ((float)rand()) / (float)RAND_MAX;
+}
+
+// renders crash animation
+void drawCrashAnimation()
+{
+    if (!crash_animation_active)
+        return;
 
     glPushMatrix();
     glTranslatef(crash_center_x, crash_center_y, 0.0f);
 
-    for (int i = 0; i < 30; i++) {
-        float a = ((float)rand() / RAND_MAX) * 2 * M_PI;
-        float r = 30.0f * ((float)rand() / RAND_MAX);
-        float x = cos(a) * r;
-        float y = sin(a) * r;
-        glColor3ub(255, 255, 0);
+    // Yellow spark burst using triangle fans (simple flare look)
+    glColor3ub(255, 255, 0); // bright yellow
+    for (int i = 0; i < 20; i++) {
+        float ang = rnd() * 2.0f * M_PI;
+        float r = 20.0f + rnd() * 30.0f;
+        float x = cos(ang) * r;
+        float y = sin(ang) * r;
+
         glBegin(GL_TRIANGLE_FAN);
-            glVertex2f(x, y);
-            for (int j = 0; j <= 10; j++) {
-                float theta = j / 10.0f * 2 * M_PI;
-                glVertex2f(x + cos(theta) * 2, y + sin(theta) * 2);
-            }
+        glVertex2f(0.0f, 0.0f); // center
+        for (int j = 0; j <= 10; j++) {
+            float theta = (float)j / 10.0f * 2.0f * M_PI;
+            glVertex2f(x + cos(theta) * 2.0f, y + sin(theta) * 2.0f);
+        }
+        glEnd();
+    }
+
+    // Extra spark lines
+    for (int i = 0; i < 50; ++i) {
+        float ang = rnd() * 2.0f * M_PI;
+        float x = cos(ang) * crash_timer * 30.0f;
+        float y = sin(ang) * crash_timer * 30.0f;
+
+        glLineWidth(2.0f);
+        glBegin(GL_LINES);
+        glVertex2f(rnd() * 12.0f - 6.0f, rnd() * 12.0f - 6.0f);
+        glVertex2f(x + rnd() * 10.0f - 5.0f, y + rnd() * 10.0f - 5.0f);
         glEnd();
     }
 
@@ -88,11 +109,21 @@ void drawCrashAnimation() {
 }
 
 
-//opens OpenAL
-bool initOpenAL() {
+//-- OpenAL Stuff
+
+ALCdevice *audioDevice = nullptr;
+ALCcontext *audioContext = nullptr;
+
+ALuint laserSource, laserBuffer;
+ALuint enemyDieSource, enemyDieBuffer;
+ALuint musicSource, musicBuffer;
+
+//--initializes OpenAL and loads sounds
+bool initOpenAL()
+{
     audioDevice = alcOpenDevice(nullptr);
     if (!audioDevice) {
-        std::cerr << "couldnt open audio device\n";
+        std::cerr << "couldn't open audio device\n";
         return false;
     }
 
@@ -102,57 +133,53 @@ bool initOpenAL() {
         return false;
     }
 
-    // loads laser sound
     alGenSources(1, &laserSource);
     if (!loadWavFile("audio/laser1.wav", laserBuffer)) {
-        std::cerr << "couldnt load laser sound\n";
+        std::cerr << "couldn't load laser sound\n";
         return false;
     }
     alSourcei(laserSource, AL_BUFFER, laserBuffer);
 
-    // loads enemy explodes sound
     alGenSources(1, &enemyDieSource);
     if (!loadWavFile("audio/enemy_explode.wav", enemyDieBuffer)) {
-        std::cerr << "couldnt load enemy explode sound\n";
+        std::cerr << "couldn't load enemy explode sound\n";
         return false;
     }
     alSourcei(enemyDieSource, AL_BUFFER, enemyDieBuffer);
 
-    // loads menu music
     alGenSources(1, &musicSource);
     if (!loadWavFile("audio/pudding.wav", musicBuffer)) {
-        std::cerr << "couldnt load menu theme music\n";
+        std::cerr << "couldn't load menu theme music\n";
         return false;
     }
     alSourcei(musicSource, AL_BUFFER, musicBuffer);
 
-
-    std::cout << "OpenAl worked fine.\n";
+    std::cout << "OpenAL initialized.\n";
     return true;
-
 }
 
-
-
-void shutdownOpenAL() {
-    alDeleteSources(1, &enemyDieSource);
-    alDeleteBuffers(1, &enemyDieBuffer);
+// Releases OpenAL resources
+void shutdownOpenAL()
+{
     alDeleteSources(1, &laserSource);
     alDeleteBuffers(1, &laserBuffer);
+    alDeleteSources(1, &enemyDieSource);
+    alDeleteBuffers(1, &enemyDieBuffer);
     alDeleteSources(1, &musicSource);
     alDeleteBuffers(1, &musicBuffer);
-    alDeleteSources(1, &musicSource);  
-    alDeleteBuffers(1, &musicBuffer);    
-
 
     alcMakeContextCurrent(nullptr);
-    if (audioContext) alcDestroyContext(audioContext);
-    if (audioDevice) alcCloseDevice(audioDevice);
+    if (audioContext)
+        alcDestroyContext(audioContext);
+    if (audioDevice)
+        alcCloseDevice(audioDevice);
 
     std::cout << "OpenAL shut down.\n";
-    }
+}
 
-bool loadWavFile(const char* filename, ALuint &buffer) {
+// loads wav file into buffer
+bool loadWavFile(const char *filename, ALuint &buffer)
+{
     std::ifstream file(filename, std::ios::binary);
     if (!file) {
         std::cerr << "ERROR: Cannot open file " << filename << "\n";
@@ -175,20 +202,20 @@ bool loadWavFile(const char* filename, ALuint &buffer) {
 
     file.read(chunk, 4);
     int fmtSize;
-    file.read((char*)&fmtSize, 4);
+    file.read((char *)&fmtSize, 4);
 
     short formatType, channels, blockAlign, bitsPerSample;
     int sampleRate, byteRate;
 
-    file.read((char*)&formatType, 2);
-    file.read((char*)&channels, 2);
-    file.read((char*)&sampleRate, 4);
-    file.read((char*)&byteRate, 4);
-    file.read((char*)&blockAlign, 2);
-    file.read((char*)&bitsPerSample, 2);
+    file.read((char *)&formatType, 2);
+    file.read((char *)&channels, 2);
+    file.read((char *)&sampleRate, 4);
+    file.read((char *)&byteRate, 4);
+    file.read((char *)&blockAlign, 2);
+    file.read((char *)&bitsPerSample, 2);
 
-    if (fmtSize > 16) file.ignore(fmtSize - 16);
-
+    if (fmtSize > 16)
+        file.ignore(fmtSize - 16);
 
     while (true) {
         file.read(chunk, 4);
@@ -198,7 +225,7 @@ bool loadWavFile(const char* filename, ALuint &buffer) {
         }
 
         int sectionSize;
-        file.read((char*)&sectionSize, 4);
+        file.read((char *)&sectionSize, 4);
 
         if (strncmp(chunk, "data", 4) == 0) {
             std::vector<char> data(sectionSize);
@@ -211,7 +238,7 @@ bool loadWavFile(const char* filename, ALuint &buffer) {
             alGenBuffers(1, &buffer);
             alBufferData(buffer, format, data.data(), sectionSize, sampleRate);
 
-            std::cout << "WAV loaded successfully: " << filename << "\n";
+            std::cout << "WAV loaded: " << filename << "\n";
             return true;
         } else {
             file.seekg(sectionSize, std::ios::cur);
@@ -219,25 +246,28 @@ bool loadWavFile(const char* filename, ALuint &buffer) {
     }
 }
 
-// play laser sound
-void playLaserSound() {
+
+// --sound wrappers
+void playLaserSound()
+{
     alSourcei(laserSource, AL_BUFFER, laserBuffer);
     alSourcePlay(laserSource);
 }
 
-// play explosion sound
-void playEnemyDieSound() {
+void playEnemyDieSound()
+{
     alSourcei(enemyDieSource, AL_BUFFER, enemyDieBuffer);
     alSourcePlay(enemyDieSource);
 }
 
-// play theme music
-void playThemeMusic() {
+void playThemeMusic()
+{
     alSourcei(musicSource, AL_LOOPING, AL_TRUE);
     alSourcePlay(musicSource);
 }
 
-// stop theme music
-void stopThemeMusic() {
+void stopThemeMusic()
+{
     alSourceStop(musicSource);
 }
+

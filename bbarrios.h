@@ -15,6 +15,7 @@ void startCrashAnimation(float x, float y);
 void drawCrashAnimation();
 void updateCrashAnimation();
 bool isCrashDone();
+void resetCrashState();
 
 void playEnemyDieSound();
 bool initOpenAL();

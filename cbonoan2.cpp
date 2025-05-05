@@ -234,10 +234,12 @@ void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[],
             case 0: // endless mode
                 //gameMode = Game::ENDLESS_MODE;
                 gameMode = 1;
+                restartGame();
                 break;
             case 1: // boss mode
-                //gameMode = Game::BOSS_MODE;
+                //gameMode = Game::BOSS_MODE;               
                 gameMode = 2;
+                restartGame();
                 break;
             case 2: // ship selection
                 //gameMode = Game::SHIP_SELECTION;
