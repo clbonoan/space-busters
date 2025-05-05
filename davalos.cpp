@@ -285,15 +285,15 @@ void moveBossesTowardPlayer()
             float dy = shipTargetPos[1] - bosses[i].y;
             float dist = sqrt(dx * dx + dy * dy);
             if (dist > 0.0f) {
-                float accel = 4.0f;
+                float accel = 2.0f;
                 float damping = 0.88f;
-                float maxSpeed = 10.0f;
+                float maxSpeed = 6.0f;
                 
-                float randomJitterX = (rand() % 100 - 50) * 0.02f;
-                float randomJitterY = (rand() % 100 - 50) * 0.02f;
+                //float randomJitterX = (rand() % 100 - 50) * 0.02f;
+                //float randomJitterY = (rand() % 100 - 50) * 0.02f;
 
-                bosses[i].vx += (dx / dist) * accel + randomJitterX;
-                bosses[i].vy += (dy / dist) * accel + randomJitterY;
+                bosses[i].vx += (dx / dist) * accel;
+                bosses[i].vy += (dy / dist) * accel;
                 bosses[i].vx *= damping;
                 bosses[i].vy *= damping;
                 float speed = sqrt(bosses[i].vx * bosses[i].vx
