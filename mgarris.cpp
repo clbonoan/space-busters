@@ -115,22 +115,22 @@ void render_ship_selection() {
 
     glPushMatrix();
     glTranslatef(gl.xres / 2, gl.yres - 90, 0);
-    glScalef(2.5f, 2.5f, 1.0f);
+    //glScalef(2.5f, 2.5f, 1.0f);
     Rect r;
     r.bot = 0;
     r.left = 0;
     r.center = 1;
-    ggprint8b(&r, 48, 0x00ffffff, "Select Your Ship");
+    ggprint16(&r, 32, 0x00ffffff, "Select Your Ship");
     glPopMatrix();
 
     glPushMatrix();
     glTranslatef(gl.xres / 2, 100, 0);
-    glScalef(2.0f, 2.0f, 1.0f);
+    //glScalef(2.0f, 2.0f, 1.0f);
     r.bot = 0;
     r.left = 0;
     r.center = 1;
-    ggprint8b(&r, 48, 0x00ffffff, "Use Left/Right to select");
-    ggprint8b(&r, 48, 0x00ffffff, "Press Enter to confirm");
+    ggprint16(&r, 32, 0x00ffffff, "Use Left/Right to select");
+    ggprint16(&r, 32, 0x00ffffff, "Press Enter to confirm");
     glPopMatrix();
 
     float centerX = gl.xres / 2;

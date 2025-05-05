@@ -470,15 +470,8 @@ int main()
             drawIntro();
         } else {
             renderMenu();
-            //initEnemies();
         }
         x11.swapBuffers();
-        
-        /*
-        drawIntro();
-        renderMenu();
-        x11.swapBuffers();
-        */
     }
     pthread_cancel(thread_id);
     pthread_join(thread_id, NULL);
@@ -633,23 +626,17 @@ void check_mouse(XEvent *e)
         savey = e->xbutton.y;
         if (++ct < 10)
             return;		
-        //std::cout << "savex: " << savex << std::endl << std::flush;
-        //std::cout << "e->xbutton.x: " << e->xbutton.x << std::endl <<
-        //std::flush;
-        //
         // If mouse cursor is on, it does not control the ship.
         // It's a regular mouse.
         if (gl.mouse_cursor_on)
             return;
         //printf("mouse move "); fflush(stdout);
         if (xdiff > 0) {
-            //std::cout << "xdiff: " << xdiff << std::endl << std::flush;
             g.ship.angle += 0.05f * (float)xdiff;
             if (g.ship.angle >= 360.0f)
                 g.ship.angle -= 360.0f;
         }
         else if (xdiff < 0) {
-            //std::cout << "xdiff: " << xdiff << std::endl << std::flush;
             g.ship.angle += 0.05f * (float)xdiff;
             if (g.ship.angle < 0.0f)
                 g.ship.angle += 360.0f;
@@ -715,7 +702,9 @@ int check_keys(XEvent *e)
     switch (key) {
         case XK_Escape:
             //	return 1;
-            if (!g.inMenu)
+            if (!g.inMenu &&
+               (g.gameMode == Game::ENDLESS_MODE ||
+                g.gameMode == Game::BOSS_MODE)) 
                 g.isPaused = !g.isPaused;
             break;
         case XK_m:
@@ -1139,17 +1128,24 @@ void renderMenu() {
         return;
     }
     if (g.isEnd) {
-        gl.gameOver = 1;
+        if (!gl.gameOver)
+            gl.gameOver = 1;
+
         drawGameOver(gl.gameOver, gl.xres, gl.yres, gl.gameOverTexture,
                 g.menuSelection);
         int tmpGameMode = static_cast<int>(g.gameMode);
-        bool prevIsEnd = g.isEnd;
+        // check if player wants to restart game
+        bool restartRequested = false;
         handleGameOverInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode,
-                g.inMenu, g.isPaused, g.isEnd);
+                g.inMenu, g.isPaused, g.isEnd, gl.gameOver, restartRequested);
         g.gameMode = static_cast<Game::GameMode>(tmpGameMode);
         // if the player selected restart
-        if (prevIsEnd && !g.isEnd) {
+        if (restartRequested) {
             restartGame();
+            return;
+        }
+        if (g.inMenu) {
+            gl.gameOver = 0;
             return;
         }
         return;
@@ -1164,12 +1160,27 @@ void renderMenu() {
         return;
     } else if (g.gameMode == Game::ENDLESS_MODE) {
         // add calls to functions that spawn certain enemies, etc..
+        g.gameMode = Game::ENDLESS_MODE;
+        g.inMenu = false;
+        g.isEnd = false;
+        gl.gameOver = 0;
         render();
+        //restartGame();
     } else if (g.gameMode == Game::BOSS_MODE) {
         // add calls to functions that spawns boss enemy, etc..
-        render();        
+        g.gameMode = Game::BOSS_MODE;
+        g.inMenu = false;
+        g.isEnd = false;
+        gl.gameOver = 0;
+        render();   
+        //restartGame();     
     } else if (g.gameMode == Game::SHIP_SELECTION) { 
         static bool firstTime = true;
+        g.gameMode = Game::SHIP_SELECTION;
+        g.inMenu = false;
+        g.isEnd = false;
+        g.isPaused = false;
+        gl.gameOver = 0;
         if (firstTime) {
             gl.keys[XK_Return] = 0;
             firstTime = false;

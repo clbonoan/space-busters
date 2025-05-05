@@ -54,14 +54,9 @@ void screenLeftText(int yres)
     ggprint8b(&r, 16, 0x00ffff00, "Press i for Instructions");
 }
 
-// --------------------------------------------------------------------
 // added health bar function
-// --------------------------------------------------------------------
 void drawHealthBar(int xres, float health)
 {
-    // debug
-    //printf("drawHealthBar: %f\n", health); 
-   
     // set caps/bounds for health 
     if (health > 1.0f)
         health = 1.0f;
@@ -110,9 +105,7 @@ void drawHealthBar(int xres, float health)
     }
 }
 
-// -------------------------------------------------------------------
 // add menu screen to choose endless mode or boss mode before starting
-// -------------------------------------------------------------------
 void drawMenu(int title, int xres, int yres, GLuint titleTexture, 
         int menuSelection)
 {
@@ -194,12 +187,9 @@ void drawGameOver(int gameOver, int xres, int yres, GLuint gameOverTexture,
            "Return to Main Menu");
    ggprint16(&r, 32, (menuSelection == 2) ? 0x00ff0000 : 0x00ffffff,
            "Exit");
-
 }
 
-//-----------------------------------------------------------------
 // add pause menu
-//-----------------------------------------------------------------
 void drawPauseMenu(int xres, int yres, int menuSelection) 
 {
     // draw "resume", "main menu", and "exit" options
@@ -218,7 +208,6 @@ void drawPauseMenu(int xres, int yres, int menuSelection)
             "Exit");
 
 }
-
 
 //--------------------------------------------------------------
 //added function to handle main menu choices
@@ -245,17 +234,14 @@ void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[],
             case 0: // endless mode
                 //gameMode = Game::ENDLESS_MODE;
                 gameMode = 1;
-                //gameMode = static_cast<int>(Game::ENDLESS_MODE);
                 break;
             case 1: // boss mode
-                //gameMode = static_cast<int>(Game::BOSS_MODE);
-                gameMode = 2;
                 //gameMode = Game::BOSS_MODE;
+                gameMode = 2;
                 break;
             case 2: // ship selection
-                //gameMode = static_cast<int>(Game::SHIP_SELECTION);
-                gameMode = 3;
                 //gameMode = Game::SHIP_SELECTION;
+                gameMode = 3;
                 break;
             case 3: // exit
                 exit(0);
@@ -264,9 +250,7 @@ void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[],
     }
 }
 
-// ---------------------------------------------------------
 // add function to handle pause menu input
-// ---------------------------------------------------------
 void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[], 
         int &gameMode, bool &inMenu, bool &isPaused) 
 {
@@ -301,7 +285,8 @@ void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[],
 
 // add function to handle game over menu input
 void handleGameOverInput(char keys[], int &menuSelection, bool prevKeys[],
-        int &gameMode, bool &inMenu, bool &isPaused, bool &isEnd)
+        int &gameMode, bool &inMenu, bool &isPaused, bool &isEnd, 
+        int &gameOver, bool &restartRequested)
 {
     if (keys[XK_Up] && !prevKeys[XK_Up])
         menuSelection = (menuSelection == 0) ? 2 : menuSelection - 1;
@@ -313,14 +298,16 @@ void handleGameOverInput(char keys[], int &menuSelection, bool prevKeys[],
     if (keys[XK_Return]) {
         switch (menuSelection) {
             case 0: // restart
-                restartGame();
-                gameMode = gameMode; //this goes only to endless mode for now
+                restartRequested = true;
+                gameMode = gameMode;
                 isEnd = false;
+                gameOver = 0;
                 break; 
             case 1: // go to main menu
                 inMenu = true;
                 isPaused = false;
                 isEnd = false;
+                gameOver = 0;
                 gameMode = 0;
                 break;
             case 2: // exit game
