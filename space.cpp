@@ -1303,7 +1303,8 @@ void render()
     drawHealthBar(gl.xres, g.ship.health);
     drawCrashAnimation();
     screenLeftText(gl.yres);
-    screenRightText(gl.xres, gl.yres, g.score); 
+    //screenRightText(gl.xres, gl.yres, g.score); 
+    drawScore();
     if (gl.credits) {
         r.bot = gl.yres - 55;
         r.left = 10;

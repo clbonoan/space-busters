@@ -39,4 +39,7 @@ extern void drawIntro();
 extern bool introDone;
 extern void drawNebulaBackground();
 
+//score
+extern void drawScore();
+
 #endif

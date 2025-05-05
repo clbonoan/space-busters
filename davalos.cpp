@@ -16,6 +16,7 @@ ___|____|____|____|
 #include <cstring>
 #include <cstdlib>
 #include <cmath>
+#include "eaviles.h"
 
 using namespace std;
 
@@ -34,6 +35,7 @@ public:
 class Game {
     public:
         Ship ship;
+        int score;
         enum GameMode {
             MAIN_MENU,
             ENDLESS_MODE,
@@ -98,6 +100,10 @@ int currentBoss = 0;
 extern unsigned char *buildAlphaData(Image *img);
 extern float shipTargetPos[2];
 
+void drawScore()
+{
+    screenRightText(gl.xres, gl.yres, g.score);
+}
 void initEnemies() 
 {
     for (int i=0; i < MAX_ENEMIES; i++) {
@@ -402,6 +408,7 @@ void hitEnemy(float x, float y)
             float dist = sqrt(dx*dx + dy*dy);
             if (dist < 30.0f) {
                 zorpArmy[i].active = false;
+                g.score += 10;
                 break;
             }
         }
@@ -413,6 +420,7 @@ void hitEnemy(float x, float y)
             float dist = sqrt(dx * dx + dy * dy);
             if (dist < 30.0f) {
                 wiblobArmy[i].active = false;
+                g.score += 20;
                 //printf("golden enemy hit at (%f, %f)\n",
                 //       wiblobArmy[i].x, wiblobArmy[i].y);
                 break;
@@ -432,6 +440,7 @@ void hitEnemy(float x, float y)
                 printf("Hit Cipher! Health left: %d\n", bosses[i].health);
                 if (bosses[i].health <= 0) {
                     bosses[i].active = false;
+                    g.score += 100;
                     printf("Boss defeated!\n");
                     // (spawn next boss later)
                 }
