@@ -156,9 +156,10 @@ void drawGameOver(int gameOver, int xres, int yres, GLuint gameOverTexture,
 
    if (gameOver) {
         glEnable(GL_TEXTURE_2D);
+        glPushMatrix();
         glBindTexture(GL_TEXTURE_2D, gameOverTexture);
-        int gameOverWidth = 775;
-        int gameOverHeight = 77;
+        int gameOverWidth = 784;
+        int gameOverHeight = 78;
         int gameOverXStart = (xres - gameOverWidth) / 2;
         int gameOverXEnd = gameOverXStart + gameOverWidth;
         int gameOverYStart = yres - gameOverHeight - 200;
@@ -173,6 +174,7 @@ void drawGameOver(int gameOver, int xres, int yres, GLuint gameOverTexture,
             glTexCoord2f(1.0f, 1.0f);
             glVertex2i(gameOverXEnd, gameOverYStart);
         glEnd();
+        glPopMatrix();
    }
 
    r.left = xres / 2;

@@ -251,7 +251,7 @@ class Image {
 
 Image img[2] = { 
     "./images/title.png",
-    "./images/gameover.png"
+    "./images/gameover1.png"
 };
 
 //X Windows variables
