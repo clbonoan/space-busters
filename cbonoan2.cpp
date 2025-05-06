@@ -262,7 +262,6 @@ void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[],
 
     // selecting option
     if (keys[XK_Return]) {
-        //isPaused = false;
         isPaused = true;
         switch (menuSelection) {
             case 0: // resume
@@ -271,10 +270,11 @@ void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[],
                 keys[XK_Return] = 0;   
                 break;
             case 1: // go to main menu
+                restartGame();
                 inMenu = true;
-                isPaused = false;
+                isPaused = true;
                 gameMode = 1;
-                keys[XK_Return] = 0;  
+                keys[XK_Return] = 0;
                 break;
             case 2: // exit game
                 exit(0);
@@ -307,6 +307,7 @@ void handleGameOverInput(char keys[], int &menuSelection, bool prevKeys[],
                 keys[XK_Return] = 0;
                 break; 
             case 1: // go to main menu
+                restartGame();
                 inMenu = true;
                 isPaused = false;
                 isEnd = false;

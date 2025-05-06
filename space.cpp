@@ -739,7 +739,7 @@ void shootBullet()
         b->color[1] = 1.0f;
         b->color[2] = 1.0f;
         g.nbullets++;
-        std::cout << "playing laser sound..\n";
+        //std::cout << "playing laser sound..\n";
         playLaserSound();
     }
 }
@@ -881,7 +881,7 @@ void physics()
                     float dist = sqrt(dx * dx + dy * dy);
                     if (dist < 70.0f && timeSinceLastHit > 1.0) {
                         g.ship.takeDamage(0.3f);
-                        printf("hit by Boss! Health %2f\n", g.ship.health);
+                        //printf("hit by Boss! Health %2f\n", g.ship.health);
                         clock_gettime(CLOCK_REALTIME, &lastBossHit);
                     }
                 }
@@ -1013,7 +1013,7 @@ void restartGame()
     }
 
     // set game mode to last one played
-    g.gameMode = static_cast<Game::GameMode>(g.lastGameMode);
+    //g.gameMode = static_cast<Game::GameMode>(g.lastGameMode);
 }
 
 //added function to render menu before game and pause menu during
@@ -1033,6 +1033,10 @@ void renderMenu()
         handlePauseMenuInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode, 
                 g.inMenu, g.isPaused);
         g.gameMode = static_cast<Game::GameMode>(tmpGameMode);
+        if (g.inMenu) {
+            gl.gameOver = 0;
+            return;
+        }
         return;
     }
     if (g.isEnd) {
