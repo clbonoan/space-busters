@@ -53,5 +53,6 @@ extern void drawNebulaBackground();
 
 //score
 extern void drawScore();
+extern void drawFinalScore();
 
 #endif

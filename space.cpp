@@ -1037,6 +1037,7 @@ void renderMenu()
 
         drawGameOver(gl.gameOver, gl.xres, gl.yres, gl.gameOverTexture,
                 g.menuSelection);
+        drawFinalScore();
         int tmpGameMode = static_cast<int>(g.gameMode);
         // check if player wants to restart game
         bool restartRequested = false;

@@ -104,6 +104,17 @@ void drawScore()
 {
     screenRightText(gl.xres, gl.yres, g.score);
 }
+
+void drawFinalScore()
+{
+    Rect r;
+    r.bot = gl.yres / 2 - 70;
+    r.left = gl.xres / 2;
+    r.center = 1;
+    ggprint16(&r, 16, 0xFFFFFF00, "FINAL SCORE: %d", g.score);
+    //screenRightText((gl.xres / 2), (gl.yres / 2), g.score);
+}
+
 void initEnemies() 
 {
     for (int i=0; i < MAX_ENEMIES; i++) {
