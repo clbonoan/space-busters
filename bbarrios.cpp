@@ -152,7 +152,7 @@ bool initOpenAL()
     alSourcei(enemyDieSource, AL_BUFFER, enemyDieBuffer);
 
     alGenSources(1, &musicSource);
-    if (!loadWavFile("audio/pudding.wav", musicBuffer)) {
+    if (!loadWavFile("audio/menu_theme.wav", musicBuffer)) {
         std::cerr << "couldn't load menu theme music\n";
         return false;
     }
