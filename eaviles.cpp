@@ -102,8 +102,8 @@ void spawnStar()
                 HealObject[i].x = rand() % gl.xres;
                 HealObject[i].y = rand() % gl.yres;
                 HealObject[i].active = true;
-                printf("spawned star at (%f, %f)\n",
-                        HealObject[i].x, HealObject[i].y);
+                //printf("spawned star at (%f, %f)\n",
+                //        HealObject[i].x, HealObject[i].y);
                 break;
             }   
         }   

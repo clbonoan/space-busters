@@ -104,6 +104,7 @@ void drawScore()
 {
     screenRightText(gl.xres, gl.yres, g.score);
 }
+
 void initEnemies() 
 {
     for (int i=0; i < MAX_ENEMIES; i++) {
@@ -437,7 +438,7 @@ void hitEnemy(float x, float y)
             if (dist < 40.0f) { // bigger hitbox
                 bosses[i].health--;
                 //printf("Player's score: %d\n", g.score);
-                printf("Hit Cipher! Health left: %d\n", bosses[i].health);
+                //printf("Hit Cipher! Health left: %d\n", bosses[i].health);
                 if (bosses[i].health <= 0) {
                     bosses[i].active = false;
                     g.score += 100;

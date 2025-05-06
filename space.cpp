@@ -1,12 +1,11 @@
 //
 //program: space.cpp
 //author: team 7
+//cbonoan, davalos, eaviles, bbarrios, mgarris
 //framework program: asteroids.cpp
 //framework author:  Gordon Griesel
 //date:    2014 - 2025
 //
-//------------------------------------------------------------
-//changes made:
 //------------------------------------------------------------
 
 #define GGLINUX
@@ -17,9 +16,7 @@
 #include <ctime>
 #include <cmath>
 #include <X11/Xlib.h>
-//#include <X11/Xutil.h>
 #include <GL/gl.h>
-//#include <GL/glu.h>
 #include <GL/glx.h>
 #include <X11/keysym.h>
 #include "log.h"
@@ -30,10 +27,6 @@
 #include "bbarrios.h"
 #include "eaviles.h"
 #include "davalos.h"
-
-//texture variables
-//GLuint ufoTexture;
-//int ufoWidth, ufoHeight;
 
 using namespace std; 
 
@@ -138,7 +131,6 @@ class Ship {
             if (health > 1.0)
                 health = 1.0;
         }
-        //float getHealth() { return health; }
 };
 
 class Bullet {
@@ -305,7 +297,6 @@ class X11_wrapper {
             }
             win = XCreateWindow(dpy, root, 0, 0, gl.xres, gl.yres, 0,
                     vi->depth, InputOutput, vi->visual, winops, &swa);
-            //win = XCreateWindow(dpy, root, 0, 0, gl.xres, gl.yres, 0,
             //vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
             set_title();
             glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
@@ -386,9 +377,7 @@ class X11_wrapper {
         Display* getDisplayPointer() const { return dpy; }
         Window getWindowHandle() const { return win; }
 } x11(gl.xres, gl.yres);
-// ---> for fullscreen x11(0, 0);
 
-//function prototypes
 void init_opengl(void);
 void check_mouse(XEvent *e);
 int check_keys(XEvent *e);
@@ -405,13 +394,8 @@ extern void handle_ship_selection_input();
 extern void updateParticles();
 extern void renderParticles();
 extern void addThrustParticle(float x, float y, float dx, float dy);
-//========================================
-//
 float shipTargetPos[2] = {0.0f, 0.0f};
-//
-//========================================
 
-//==========================================================================
 // M A I N
 //==========================================================================
 int main()
@@ -614,10 +598,8 @@ void check_mouse(XEvent *e)
         }
     }
     if (e->xbutton.button==3) {
-        //Right button is down
     }
 
-    //keys[XK_Up] = 0;
     if (savex != e->xbutton.x || savey != e->xbutton.y) {
         // the mouse moved
         int xdiff = savex - e->xbutton.x;
@@ -626,11 +608,8 @@ void check_mouse(XEvent *e)
         savey = e->xbutton.y;
         if (++ct < 10)
             return;		
-        // If mouse cursor is on, it does not control the ship.
-        // It's a regular mouse.
         if (gl.mouse_cursor_on)
             return;
-        //printf("mouse move "); fflush(stdout);
         if (xdiff > 0) {
             g.ship.angle += 0.05f * (float)xdiff;
             if (g.ship.angle >= 360.0f)
@@ -680,7 +659,6 @@ int check_keys(XEvent *e)
         return 0;
     }
     int key = (XLookupKeysym(&e->xkey, 0) & 0x0000ffff);
-    //Log("key: %i\n", key);
     if (e->type == KeyRelease) {
         gl.keys[key] = 0;
         if (key == XK_Shift_L || key == XK_Shift_R)
@@ -688,7 +666,6 @@ int check_keys(XEvent *e)
         return 0;
     }
     if (e->type == KeyPress) {
-        //std::cout << "press" << std::endl;
         gl.keys[key]=1;
         if (key == XK_Shift_L || key == XK_Shift_R) {
             shift = 1;
@@ -696,13 +673,11 @@ int check_keys(XEvent *e)
         }
     }
 
-
-
     (void)shift;
     switch (key) {
         case XK_Escape:
             //	return 1;
-            if (!g.inMenu &&
+            if (!g.inMenu && !g.isEnd &&
                (g.gameMode == Game::ENDLESS_MODE ||
                 g.gameMode == Game::BOSS_MODE)) 
                 g.isPaused = !g.isPaused;
@@ -726,11 +701,13 @@ int check_keys(XEvent *e)
     return 0;
 }
 
-void setGameMode(Game::GameMode mode) {
+void setGameMode(Game::GameMode mode) 
+{
     g.gameMode = mode;
 }
 
-void shootBullet() {
+void shootBullet() 
+{
     struct timespec bt;
     clock_gettime(CLOCK_REALTIME, &bt);
     double ts = timeDiff(&g.bulletTimer, &bt);
@@ -763,32 +740,11 @@ void shootBullet() {
         g.nbullets++;
         std::cout << "playing laser sound..\n";
         playLaserSound();
-
     }
 }
 
-// void pollMousePosition(Display *dpy, Window win) {
-//     Window root_return, child_return;
-//     int root_x, root_y;
-//     int win_x, win_y;
-//     unsigned int mask_return;
-
-//     Bool result = XQueryPointer(dpy, win,
-//                   &root_return, &child_return,
-//                   &root_x, &root_y, &win_x, &win_y,
-//                   &mask_return);
-
-//     if (!result) {
-//         // Cursor not on the same screen, don't update mousePos
-//         return;
-//     }
-
-//     mousePos[0] = (float)win_x;
-//     mousePos[1] = (float)(gl.yres - win_y);
-//     //cout << "polling mouse: " << win_x << ", " << win_y << std::endl;
-// }
-
-void* mousePollThread(void* arg) {
+void* mousePollThread(void* arg) 
+{
     (void)arg; // Gets rid of warning for not using arg
     Display *dpy = x11.getDisplayPointer();
     Window win = x11.getWindowHandle();
@@ -815,16 +771,6 @@ void* mousePollThread(void* arg) {
 
 void physics()
 {
-    //Flt d0,d1,dist;
-
-    // static struct timespec lastPollTime = {0, 0};
-    // struct timespec now;
-    // clock_gettime(CLOCK_REALTIME, &now);
-    // double dt = timeDiff(&lastPollTime, &now);
-    // if (dt > .1) { // rate to poll for mouse position
-    //     pollMousePosition(x11.getDisplayPointer(), x11.getWindowHandle());
-    //     timeCopy(&lastPollTime, &now);
-    // }
     if (!g.isPaused) {
         updateCrashAnimation();
         mousePos[0] = gl.polledMouseX.load();
@@ -834,31 +780,31 @@ void physics()
             shootBullet();
         }
 
-        //Update bullet positions
+        // Update bullet positions
         struct timespec bt;
         clock_gettime(CLOCK_REALTIME, &bt);
         int i = 0;
         while (i < g.nbullets) {
             Bullet *b = &g.barr[i];
-            //How long has bullet been alive?
+            // How long has bullet been alive?
             double ts = timeDiff(&b->time, &bt);
             if (ts > 2.5) {
-                //time to delete the bullet.
+                // time to delete the bullet.
                 memcpy(&g.barr[i], &g.barr[g.nbullets-1],
                         sizeof(Bullet));
                 g.nbullets--;
-                //do not increment i.
+                // do not increment i.
                 continue;
             }
-            //move the bullet
+            // move the bullet
             b->pos[0] += b->vel[0];
             b->pos[1] += b->vel[1];
        
-            //Enemy
+            // Enemy
             if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
                 hitEnemy(b->pos[0], b->pos[1]);
 	   
-	            //play enemy explodes sound
+	            // play enemy explodes sound
 	            playEnemyDieSound();
 	        } 
 
@@ -867,14 +813,10 @@ void physics()
                 memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
                 g.nbullets--;
                 continue;
-                //b->pos[0] = 0.0f;
-                //b->vel[0] = -b->vel[0];
             } else if (b->pos[0] > (float)gl.xres) {
                 memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
                 g.nbullets--;
                 continue;
-                //b->pos[0] = gl.xres;
-                //b->vel[0] = -b->vel[0];
             }
 
             // bullets bounce off the edges / kill the bullet
@@ -882,14 +824,10 @@ void physics()
                 memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
                 g.nbullets--;
                 continue;
-                //b->pos[1] = 0.0f;
-                //b->vel[1] = -b->vel[1];
             } else if (b->pos[1] > (float)gl.yres) {
                 memcpy(&g.barr[i], &g.barr[g.nbullets - 1], sizeof(Bullet));
                 g.nbullets--;
                 continue;
-                //b->pos[1] = gl.yres;
-                //b->vel[1] = -b->vel[1];
             }
             ++i;
         }
@@ -937,7 +875,7 @@ void physics()
                         if (dist < 35.0f) {
                             g.ship.takeDamage(0.1f);
                             zorpArmy[i].active = false;
-                            printf("hit by Zorp! Health %2f\n", g.ship.health);
+                            //printf("hit by Zorp! Health %2f\n", g.ship.health);
                         }
                 }
                 if (wiblobArmy[i].active) {
@@ -947,7 +885,7 @@ void physics()
                         if (dist < 35.0f) {
                             g.ship.takeDamage(0.1f);
                             wiblobArmy[i].active = false;
-                            printf("hit by Wiblob! Health %2f\n", g.ship.health);
+                            //printf("hit by Wiblob! Health %2f\n", g.ship.health);
                         }
                 }   
             }
@@ -975,34 +913,15 @@ void physics()
                 g.inMenu = false;
                 gameOverReady = false;
             }
-
-        /*if (g.ship.health == 0.0f && !g.isEnd && isCrashDone()) {
-            g.lastGameMode = static_cast<int>(g.gameMode);
-            g.isEnd = true;
-            g.inMenu = false;
-            g.lastGameMode = g.gameMode; 
-
-            startCrashAnimation(g.ship.pos[0], g.ship.pos[1]);
-            g.lastGameMode = static_cast<int>(g.gameMode);
-            g.isEnd = true;
-            g.inMenu = false;
-
-            //renderMenu();
-        } else if (g.ship.health == 0.0f && !g.isEnd && !isCrashDone()) {
-            startCrashAnimation (g.ship.pos[0], g.ship.pos[1]);
-        } */          
     } 
-
 }
 
-    //======================================================================
     // keep ship within window
     if (g.ship.pos[0] < 0) g.ship.pos[0] = 0;
     if (g.ship.pos[0] > gl.xres) g.ship.pos[0] = gl.xres;
     if (g.ship.pos[1] < 0) g.ship.pos[1] = 0;
     if (g.ship.pos[1] > gl.yres) g.ship.pos[1] = gl.yres;
 
-    //---------------------------------------------------
     //check keys pressed now
     if (gl.keys[XK_Left]) {
         g.ship.angle += 4.0;
@@ -1032,38 +951,7 @@ void physics()
             g.ship.vel[1] *= speed;
         }
     }
-    // if (gl.keys[XK_space]) {
-    // 	//a little time between each bullet
-    // 	struct timespec bt;
-    // 	clock_gettime(CLOCK_REALTIME, &bt);
-    // 	double ts = timeDiff(&g.bulletTimer, &bt);
-    // 	if (ts > 0.1) {
-    // 		timeCopy(&g.bulletTimer, &bt);
-    // 		if (g.nbullets < MAX_BULLETS) {
-    // 			//shoot a bullet...
-    // 			//Bullet *b = new Bullet;
-    // 			Bullet *b = &g.barr[g.nbullets];
-    // 			timeCopy(&b->time, &bt);
-    // 			b->pos[0] = g.ship.pos[0];
-    // 			b->pos[1] = g.ship.pos[1];
-    // 			b->vel[0] = g.ship.vel[0];
-    // 			b->vel[1] = g.ship.vel[1];
-    // 			//convert ship angle to radians
-    // 			Flt rad = ((g.ship.angle+90.0) / 360.0f) * PI * 2.0;
-    // 			//convert angle to a vector
-    // 			Flt xdir = cos(rad);
-    // 			Flt ydir = sin(rad);
-    // 			b->pos[0] += xdir*20.0f;
-    // 			b->pos[1] += ydir*20.0f;
-    // 			b->vel[0] += xdir*6.0f + rnd()*0.1;
-    // 			b->vel[1] += ydir*6.0f + rnd()*0.1;
-    // 			b->color[0] = 1.0f;
-    // 			b->color[1] = 1.0f;
-    // 			b->color[2] = 1.0f;
-    // 			g.nbullets++;
-    // 		}
-    // 	}
-    // }
+    
     if (g.mouseThrustOn) {
         //should thrust be turned off
         struct timespec mtt;
@@ -1077,10 +965,10 @@ void physics()
     updateParticles();
 }
 
-// -------------------------------------------------------------------
 // add restart game logic after health reaches 0
-// -------------------------------------------------------------------
-void restartGame() {
+void restartGame() 
+{
+    g.score = 0;
     g.ship.health = 1.0f;
     g.ship.pos[0] = gl.xres / 2;
     g.ship.pos[1] = gl.yres / 2;
@@ -1102,17 +990,13 @@ void restartGame() {
         HealObject[i].active = false;
     }
 
-    // reset score 
-    g.score = 0;
-
     // set game mode to last one played
     g.gameMode = static_cast<Game::GameMode>(g.lastGameMode);
 }
 
-//----------------------------------------------------------------
 //added function to render menu before game and pause menu during
-//----------------------------------------------------------------
-void renderMenu() {
+void renderMenu() 
+{
     if (g.inMenu) {
         drawMenu(gl.title, gl.xres, gl.yres, gl.titleTexture, g.menuSelection);
         int tmpGameMode = static_cast<int>(g.gameMode);
@@ -1192,8 +1076,8 @@ void renderMenu() {
     }
 }
 
-
-void drawUFO(float x, float y, GLuint texture) {
+void drawUFO(float x, float y, GLuint texture) 
+{
     float w = 32.0f * 0.7, h = 32.0f * 0.7; //shrank to 70%
 
     glPushMatrix();
@@ -1219,7 +1103,8 @@ void drawUFO(float x, float y, GLuint texture) {
     glPopMatrix();
 }
 
-void cleanupTextures() {
+void cleanupTextures() 
+{
     glDeleteTextures(1, &g.ufoTexture);
     glDeleteTextures(3, shipTextures);
 }
@@ -1272,16 +1157,14 @@ void render()
     glPopMatrix();
     
     glEnable(GL_TEXTURE_2D);
+    
 
-
-    //------------------------------
     //draws crash animation   
     if (crash_animation_active) {
         drawCrashAnimation();
        // return;
     }
-
-    //-------------------------------------------------------------------------
+    
     //Draw the bullets
     for (int i=0; i<g.nbullets; i++) {
         Bullet *b = &g.barr[i];
@@ -1303,8 +1186,8 @@ void render()
     drawHealthBar(gl.xres, g.ship.health);
     drawCrashAnimation();
     screenLeftText(gl.yres);
-    //screenRightText(gl.xres, gl.yres, g.score); 
     drawScore();
+
     if (gl.credits) {
         r.bot = gl.yres - 55;
         r.left = 10;
@@ -1322,6 +1205,3 @@ void render()
     glEnable(GL_TEXTURE_2D);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
-
-
-

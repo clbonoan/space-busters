@@ -145,6 +145,7 @@ void drawMenu(int title, int xres, int yres, GLuint titleTexture,
     }
 }
 
+// add menu screen to choose what to do after game ends
 void drawGameOver(int gameOver, int xres, int yres, GLuint gameOverTexture,
         int menuSelection)
 {
@@ -208,9 +209,7 @@ void drawPauseMenu(int xres, int yres, int menuSelection)
 
 }
 
-//--------------------------------------------------------------
 //added function to handle main menu choices
-//--------------------------------------------------------------
 void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[], 
         int &gameMode, bool &inMenu) 
 {
@@ -305,6 +304,7 @@ void handleGameOverInput(char keys[], int &menuSelection, bool prevKeys[],
                 gameMode = gameMode;
                 isEnd = false;
                 gameOver = 0;
+                restartGame();
                 keys[XK_Return] = 0;
                 break; 
             case 1: // go to main menu
