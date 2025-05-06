@@ -188,7 +188,7 @@ void handle_ship_selection_input() {
     if (gl.keys[XK_Return]) {
         selectedShip = selectedShip; 
         g.inMenu = true;
-        gl.keys[XK_Return] = 0;
         setGameMode(Game::MAIN_MENU);
+        gl.keys[XK_Return] = 0;
     }
 }
