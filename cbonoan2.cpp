@@ -3,14 +3,13 @@
 #include <fstream>
 #include "fonts.h"
 #include "cbonoan.h"
+#include "davalos.h"
+#include "eaviles.h"
 #include <GL/gl.h>
 #include <GL/glx.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <cstring>
-
-//extern Global gl;
-//extern Game g;
 
 extern void show_davalos(Rect *r);
 extern void show_edwin(Rect *r);

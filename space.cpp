@@ -255,7 +255,8 @@ class X11_wrapper {
     public:
         X11_wrapper() { }
         X11_wrapper(int w, int h) {
-            GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
+            GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, 
+                None };
             //GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, None };
             XSetWindowAttributes swa;
             setup_screen_res(gl.xres, gl.yres);
@@ -297,7 +298,6 @@ class X11_wrapper {
             }
             win = XCreateWindow(dpy, root, 0, 0, gl.xres, gl.yres, 0,
                     vi->depth, InputOutput, vi->visual, winops, &swa);
-            //vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
             set_title();
             glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
             glXMakeCurrent(dpy, win, glc);
@@ -366,7 +366,8 @@ class X11_wrapper {
             blank = XCreateBitmapFromData (dpy, win, data, 1, 1);
             if (blank == None)
                 std::cout << "error: out of memory." << std::endl;
-            cursor = XCreatePixmapCursor(dpy, blank, blank, &dummy, &dummy, 0, 0);
+            cursor = XCreatePixmapCursor(dpy, blank, blank, &dummy, &dummy, 
+                    0, 0);
             XFreePixmap(dpy, blank);
             //this makes the cursor. then set it using this function
             XDefineCursor(dpy, win, cursor);
@@ -801,9 +802,9 @@ void physics()
             b->pos[1] += b->vel[1];
        
             // Enemy
-            if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
+            if (g.gameMode == Game::ENDLESS_MODE || 
+                    g.gameMode == Game::BOSS_MODE) {
                 hitEnemy(b->pos[0], b->pos[1]);
-	   
 	            // play enemy explodes sound
 	            playEnemyDieSound();
 	        } 
@@ -862,7 +863,8 @@ void physics()
 
         //Enemy movement and collision
         //collision between enemy and player
-        if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
+        if (g.gameMode == Game::ENDLESS_MODE || 
+                g.gameMode == Game::BOSS_MODE) {
             moveEnemiesTowardPlayer();
             //updateEnemySpawnTimer();
             updateStarSpawnTimer();
@@ -893,7 +895,8 @@ void physics()
                         if (dist < 35.0f) {
                             g.ship.takeDamage(0.1f);
                             zorpArmy[i].active = false;
-                            //printf("hit by Zorp! Health %2f\n", g.ship.health);
+                            //printf("hit by Zorp! Health %2f\n", 
+                            //g.ship.health);
                         }
                 }
                 if (wiblobArmy[i].active) {
@@ -903,7 +906,8 @@ void physics()
                         if (dist < 35.0f) {
                             g.ship.takeDamage(0.1f);
                             wiblobArmy[i].active = false;
-                            //printf("hit by Wiblob! Health %2f\n", g.ship.health);
+                            //printf("hit by Wiblob! Health %2f\n", 
+                            //g.ship.health);
                         }
                 }   
             }
@@ -920,8 +924,8 @@ void physics()
                 }
             }
               
-            if (g.ship.health == 0.0f && !crash_animation_active && !g.isEnd && 
-                    !gameOverReady) {
+            if (g.ship.health == 0.0f && !crash_animation_active && 
+                    !g.isEnd && !gameOverReady) {
                 // Start the crash animation only once
                 startCrashAnimation(g.ship.pos[0], g.ship.pos[1]);   
             } else if (g.ship.health == 0.0f && !g.isEnd && gameOverReady) {
@@ -931,8 +935,8 @@ void physics()
                 g.inMenu = false;
                 gameOverReady = false;
             }
-    } 
-}
+        } 
+    }
 
     // keep ship within window
     if (g.ship.pos[0] < 0) g.ship.pos[0] = 0;
