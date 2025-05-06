@@ -36,7 +36,8 @@ void show_credits(Rect *r)
 void show_instructions(Rect *r)
 {
     ggprint8b(r, 16, 0x00ff00ff, "WASD to move");
-    ggprint8b(r, 16, 0x00ff00ff, "Space to shoot");
+    ggprint8b(r, 16, 0x00ff00ff, "Space or left click to shoot");
+    ggprint8b(r, 16, 0x00ff00ff, "Mouse to aim bullets");
     ggprint8b(r, 16, 0x00ff00ff, "Arrow keys to navigate menu");
 }
 

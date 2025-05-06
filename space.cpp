@@ -1033,10 +1033,6 @@ void renderMenu()
         handlePauseMenuInput(gl.keys, g.menuSelection, g.prevKeys, tmpGameMode, 
                 g.inMenu, g.isPaused);
         g.gameMode = static_cast<Game::GameMode>(tmpGameMode);
-        if (g.inMenu) {
-            gl.gameOver = 0;
-            return;
-        }
         return;
     }
     if (g.isEnd) {
