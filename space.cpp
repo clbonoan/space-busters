@@ -864,9 +864,27 @@ void physics()
         //collision between enemy and player
         if (g.gameMode == Game::ENDLESS_MODE || g.gameMode == Game::BOSS_MODE) {
             moveEnemiesTowardPlayer();
-            updateEnemySpawnTimer();
+            //updateEnemySpawnTimer();
             updateStarSpawnTimer();
-        
+       
+            static struct timespec lastBossHit = {0, 0};
+            struct timespec now;
+            clock_gettime(CLOCK_REALTIME, &now);
+            double timeSinceLastHit = timeDiff(&lastBossHit, &now);
+
+            for (int i = 0; i < MAX_BOSSES; i++) {
+                if (bosses[i].active) {
+                    float dx = bosses[i].x - g.ship.pos[0];
+                    float dy = bosses[i].y - g.ship.pos[1];
+                    float dist = sqrt(dx * dx + dy * dy);
+                    if (dist < 70.0f && timeSinceLastHit > 1.0) {
+                        g.ship.takeDamage(0.3f);
+                        printf("hit by Boss! Health %2f\n", g.ship.health);
+                        clock_gettime(CLOCK_REALTIME, &lastBossHit);
+                    }
+                }
+            }
+
             for (int i=0; i < MAX_ENEMIES; i++) {
                 if (zorpArmy[i].active) {
                     float dx = zorpArmy[i].x - g.ship.pos[0];
@@ -1127,7 +1145,7 @@ void render()
         renderHeal();
     } else if (g.gameMode == Game::BOSS_MODE) {
         drawNebulaBackground();
-        updateEnemySpawnTimer();
+        updateMinions();
         updateStarSpawnTimer();
         if (!g.isPaused) {
             moveBossesTowardPlayer();

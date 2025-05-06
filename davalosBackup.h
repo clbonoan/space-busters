@@ -4,7 +4,6 @@
 #include <GL/gl.h>
 
 const int MAX_ENEMIES = 30;
-const int MAX_BOSSES = 1;
 
 struct Enemy {
     float x, y;
@@ -14,19 +13,9 @@ struct Enemy {
     bool active;
 };
 
-struct Boss {
-    float x, y;
-    float vx, vy;
-    float ax, ay;
-    float speed;
-    int health;
-    bool active;
-};
-
 //enemy armies
 extern Enemy zorpArmy[MAX_ENEMIES];
 extern Enemy wiblobArmy[MAX_ENEMIES];
-extern Boss bosses[MAX_BOSSES];
 
 // texture handles
 extern GLuint zorpTexture;
@@ -43,7 +32,6 @@ void spawnEnemy();
 void moveEnemiesTowardPlayer();
 void renderEnemies();
 void updateEnemySpawnTimer();
-void updateMinions();
 void hitEnemy(float x, float y);
 
 //animation intro

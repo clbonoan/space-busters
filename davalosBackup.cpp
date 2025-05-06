@@ -104,6 +104,7 @@ void drawScore()
 {
     screenRightText(gl.xres, gl.yres, g.score);
 }
+
 void initEnemies() 
 {
     for (int i=0; i < MAX_ENEMIES; i++) {
@@ -396,20 +397,7 @@ void updateEnemySpawnTimer()
        spawnTime = 0;
    }
    //printf("Enemy timer tick: %d\n", spawnTime);
-}
-
-void updateMinions()
-{
-   static int spawnTime = 0;
-   spawnTime++;
-   if (spawnTime >= 35) {
-       //printf("spawn minion in BOSS MODE\n");
-       spawnEnemy();
-       spawnTime = 0;
-   }
-   //printf("Enemy timer tick: %d\n", spawnTime);
-}
-
+} 
 
 // collision between bullet and enemy
 void hitEnemy(float x, float y) 
