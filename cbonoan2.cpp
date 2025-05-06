@@ -23,7 +23,6 @@ using namespace std;
 void show_christine(Rect *r)
 {
     ggprint8b(r, 16, 0x00ff00ff, "Christine - Unknown");
-    printf("christine credit called\n");
 }
 
 void show_credits(Rect *r)
@@ -38,10 +37,8 @@ void show_credits(Rect *r)
 void show_instructions(Rect *r)
 {
     ggprint8b(r, 16, 0x00ff00ff, "WASD to move");
-    ggprint8b(r, 16, 0x00ff00ff, "Shift to boost");
-    ggprint8b(r, 16, 0x00ff00ff, "Q to turn left");
-    ggprint8b(r, 16, 0x00ff00ff, "E to turn right");
     ggprint8b(r, 16, 0x00ff00ff, "Space to shoot");
+    ggprint8b(r, 16, 0x00ff00ff, "Arrow keys to navigate menu");
 }
 
 void screenLeftText(int yres) 
@@ -222,7 +219,6 @@ void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[],
         menuSelection = (menuSelection == 0) ? 3 : menuSelection - 1;
     if (keys[XK_Down] && !prevKeys[XK_Down])
         menuSelection = (menuSelection == 3) ? 0 : menuSelection + 1;
-    //g.menuSelection ^= 1;   //XOR to toggle between 0 and 1
 
     // update prevKeys; prevents multiple presses per key press
     memcpy(prevKeys, keys, 65536);
@@ -234,18 +230,18 @@ void handleMainMenuInput(char keys[], int &menuSelection, bool prevKeys[],
         // start selected game mode
         switch (menuSelection) {
             case 0: // endless mode
-                //gameMode = Game::ENDLESS_MODE;
                 gameMode = 1;
                 restartGame();
+                keys[XK_Return] = 0;    // prevent retrigger
                 break;
             case 1: // boss mode
-                //gameMode = Game::BOSS_MODE;               
                 gameMode = 2;
                 restartGame();
+                keys[XK_Return] = 0;   
                 break;
             case 2: // ship selection
-                //gameMode = Game::SHIP_SELECTION;
                 gameMode = 3;
+                keys[XK_Return] = 0;  
                 break;
             case 3: // exit
                 exit(0);
@@ -274,11 +270,13 @@ void handlePauseMenuInput(char keys[], int &menuSelection, bool prevKeys[],
             case 0: // resume
                 isPaused = false;
                 gameMode = gameMode;
+                keys[XK_Return] = 0;   
                 break;
             case 1: // go to main menu
                 inMenu = true;
                 isPaused = false;
                 gameMode = 1;
+                keys[XK_Return] = 0;  
                 break;
             case 2: // exit game
                 exit(0);
@@ -298,14 +296,16 @@ void handleGameOverInput(char keys[], int &menuSelection, bool prevKeys[],
         menuSelection = (menuSelection == 2) ? 0 : menuSelection + 1;
 
     memcpy(prevKeys, keys, 65536);
-
+        
     if (keys[XK_Return]) {
+        isEnd = true;
         switch (menuSelection) {
             case 0: // restart
                 restartRequested = true;
                 gameMode = gameMode;
                 isEnd = false;
                 gameOver = 0;
+                keys[XK_Return] = 0;
                 break; 
             case 1: // go to main menu
                 inMenu = true;
@@ -313,6 +313,7 @@ void handleGameOverInput(char keys[], int &menuSelection, bool prevKeys[],
                 isEnd = false;
                 gameOver = 0;
                 gameMode = 0;
+                keys[XK_Return] = 0;
                 break;
             case 2: // exit game
                 exit(0);
